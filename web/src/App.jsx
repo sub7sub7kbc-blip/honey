@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api, fmt, resolvePhoto } from './api';
 import Slider from './components/Slider';
+import HoneyJourney from './components/HoneyJourney';
 import Admin from './components/Admin';
 import { AuthModal, MyAccount } from './components/Auth';
 
@@ -139,6 +140,7 @@ export default function App() {
                 </div>
               </div>
             </div>
+            <HoneyJourney />
             <div className="section reveal">
               <h2>Order karna bohat asaan hai</h2>
               <div className="steps">
