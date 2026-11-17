@@ -291,15 +291,18 @@ export default function Bee3D({ mode = 'slider', className = '' }) {
     if (mode === 'slider') {
       // Top band only: the text sits vertically centred on the left, so the
       // bees fly above it (never over the words, the badge pill or buttons).
-      // Band floor is measured: the pill's top edge sits at world y = 1.96
-      // and the lowest visible bee pixel is ~0.25 below its centre, so the
-      // centre must stay above ~2.45. The ceiling is measured too: at max
-      // flap the wings reach ~0.87 above the centre, so the centre must stay
-      // below 2.92 or the wing tips clip at the hero's top edge (3.79).
+      // Band is measured and TIGHT: the pill's top edge sits at world
+      // y = 1.96 and the lowest visible bee pixel is ~0.16 below its centre,
+      // so the centre must stay above ~2.15. The ceiling is perspective:
+      // a bee flying closer to the camera (z up to +0.6) looks bigger, so
+      // its wing tops reach the hero's top edge (3.79) sooner — with the
+      // flap at 0.3 the wings reach ~0.86 above the centre, so the centre
+      // must stay below ~2.6. The old band (2.55-2.75, flap 0.45) clipped
+      // intermittently on the live site; this one clears both sides.
       const defs = [
-        { scale: 0.55, yBase: 2.75, loop: 24, phase: 0, z: -0.4 },
-        { scale: 0.42, yBase: 2.65, loop: 32, phase: 9, z: 0.3 },
-        { scale: 0.5, yBase: 2.55, loop: 28, phase: 17, z: 0.8 },
+        { scale: 0.55, yBase: 2.5, loop: 24, phase: 0, z: -0.4 },
+        { scale: 0.42, yBase: 2.42, loop: 32, phase: 9, z: 0.1 },
+        { scale: 0.5, yBase: 2.35, loop: 28, phase: 17, z: 0.4 },
       ];
       for (const d of defs) {
         const b = buildBee();
@@ -348,7 +351,10 @@ export default function Bee3D({ mode = 'slider', className = '' }) {
       for (const b of bees) b.x = -hw - 2.5 + (b.phase / b.loop) * (hw * 2 + 5);
     }
 
-    const flap = (tt, phase = 0) => 0.12 + Math.sin(tt * Math.PI * 2 * 19 + phase) * 0.45;
+    // Wing flap: 19Hz. Amplitude 0.3 (not 0.45) — at 0.45 the wings rose
+    // high enough to clip at the hero's top edge on the live site; 0.3
+    // still flaps visibly while keeping the wing tops inside the slider.
+    const flap = (tt, phase = 0) => 0.12 + Math.sin(tt * Math.PI * 2 * 19 + phase) * 0.3;
 
     const render = () => {
       const dt = Math.min(clock.getDelta(), 0.05);
@@ -363,16 +369,18 @@ export default function Bee3D({ mode = 'slider', className = '' }) {
           // Portrait (mobile): the text sits at the bottom, so keep the bees
           // in the top band above the words. The pill's top edge sits at
           // world y = 0.23 on a phone (bottom-anchored text, 560px slider),
-          // and the lowest visible bee pixel is ~0.25 below its centre, so
-          // the centre must stay above ~0.5 — floor 0.7 clears it by ~9px.
+          // and the lowest visible bee pixel is ~0.16 below its centre, so
+          // the centre must stay above ~0.5 — floor 0.7 clears it well.
+          // Ceiling 2.5: same perspective rule as desktop (a bee at z +0.6
+          // looks bigger, so its wings would clip at the top edge above it).
           const portrait = w / h < 1;
           if (b.x > halfW + 2.5) {
             b.x = -halfW - 2.5;
-            b.yBase = portrait ? 0.7 + Math.random() * 1.9 : 2.55 + Math.random() * 0.2;
+            b.yBase = portrait ? 0.7 + Math.random() * 1.8 : 2.35 + Math.random() * 0.15;
           }
-          const yBase = portrait ? Math.min(Math.max(b.yBase, 0.7), 2.6) : Math.min(Math.max(b.yBase, 2.55), 2.75);
+          const yBase = portrait ? Math.min(Math.max(b.yBase, 0.7), 2.5) : Math.min(Math.max(b.yBase, 2.35), 2.5);
           const bob = Math.sin(t * 1.7 + b.phase) * 0.1;
-          b.group.position.set(b.x, yBase + bob, b.z + Math.sin(t * 0.8 + b.phase) * 0.35);
+          b.group.position.set(b.x, yBase + bob, b.z + Math.sin(t * 0.8 + b.phase) * 0.2);
           // slight nose-up pitch, like a real bee in flight
           b.group.rotation.set(Math.sin(t * 1.1 + b.phase) * 0.05, 0, 0.1 + Math.sin(t * 0.9 + b.phase) * 0.05);
         } else {
