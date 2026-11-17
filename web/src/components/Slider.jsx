@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { api, fmt, resolvePhoto } from '../api';
-import Bee from './Bee';
+import { BEE_FLY } from '../beeFly';
 
 const TYPES = ['sidr', 'acacia', 'multiflora', 'sarson', 'comb'];
 
@@ -53,7 +53,10 @@ export default function Slider({ products, settings, onAdd, onBuyNow }) {
         </div>
       ))}
       <div className="bees" aria-hidden="true">
-        <Bee cls="bee bee1" /><Bee cls="bee bee2" /><Bee cls="bee bee3" /><Bee cls="bee bee4" />
+        <div className="bee bee1"><img src={BEE_FLY} alt="" /></div>
+        <div className="bee bee2"><img src={BEE_FLY} alt="" /></div>
+        <div className="bee bee3"><img src={BEE_FLY} alt="" /></div>
+        <div className="bee bee4"><img src={BEE_FLY} alt="" /></div>
       </div>
       <button className="slider-arrow prev" aria-label="Previous" onClick={() => setIdx((i) => (i - 1 + slides.length) % slides.length)}>‹</button>
       <button className="slider-arrow next" aria-label="Next" onClick={() => setIdx((i) => (i + 1) % slides.length)}>›</button>
