@@ -45,21 +45,9 @@ label { font-size: 13px; font-weight: 600; color: var(--brown2); display: block;
 .slide-text { transition: opacity .2s ease; }
 .slide:not(.active) .slide-text { opacity: 0; }
 @keyframes slide-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
-/* Flying bees across the slider — a real bee photo, one big hero bee flying
-   the full width of the slider, plus smaller bees for depth. */
-.bees { position: absolute; inset: 0; overflow: hidden; z-index: 4; pointer-events: none; }
-.bee { position: absolute; left: -12%; animation: bee-fly linear infinite; will-change: left; }
-.bee img { display: block; animation: bee-bob 1.6s ease-in-out infinite alternate; filter: drop-shadow(3px 8px 8px rgba(60,35,5,.35)); }
-.bee1 { top: 8%; animation-duration: 24s; animation-delay: 0s; }
-.bee1 img { width: 150px; }
-.bee2 { top: 46%; animation-duration: 34s; animation-delay: 6s; }
-.bee2 img { width: 92px; }
-.bee3 { top: 70%; animation-duration: 30s; animation-delay: 12s; }
-.bee3 img { width: 120px; }
-.bee4 { top: 28%; animation-duration: 38s; animation-delay: 18s; }
-.bee4 img { width: 72px; }
-@keyframes bee-fly { from { left: -12%; } to { left: 104%; } }
-@keyframes bee-bob { from { transform: translateY(-7px) rotate(-4deg); } to { transform: translateY(7px) rotate(5deg); } }
+/* 3D bee layer (Three.js canvas) — the bee flies over the slider and the journey film. */
+.bee3d { position: absolute; inset: 0; overflow: hidden; z-index: 4; pointer-events: none; }
+.bee3d canvas { width: 100%; height: 100%; }
 
 /* Honey journey — cinematic photo film. Real macro close-ups crossfade with a
    slow Ken Burns zoom while the steps light up in turn. */
@@ -83,21 +71,6 @@ label { font-size: 13px; font-weight: 600; color: var(--brown2); display: block;
 .journey-progress { position: absolute; right: 18px; bottom: 16px; z-index: 3; display: flex; gap: 8px; }
 .journey-dot { width: 26px; height: 5px; border-radius: 3px; border: 0; background: rgba(255,255,255,.45); cursor: pointer; padding: 0; }
 .journey-dot.on { background: var(--gold); }
-.journey-bee { position: absolute; left: 3%; top: 62%; animation: journey-fly 20s linear infinite; will-change: left, top; z-index: 4; }
-.journey-bee img { display: block; width: 110px; animation: bee-bob 1.6s ease-in-out infinite alternate; filter: drop-shadow(3px 8px 8px rgba(20,10,0,.45)); }
-/* The bee is always visible and flies the full loop: sits on the flower side
-   (0-16%), flies (16-32%), rests by the hive entrance, left/centre (32-56%),
-   moves to the comb (56-72%), then flies back to the flower (72-100%). */
-@keyframes journey-fly {
-  0% { left: 3%; top: 62%; }
-  16% { left: 3%; top: 62%; }
-  32% { left: 34%; top: 20%; }
-  48% { left: 30%; top: 52%; }
-  56% { left: 30%; top: 52%; }
-  72% { left: 74%; top: 58%; }
-  88% { left: 40%; top: 24%; }
-  100% { left: 3%; top: 62%; }
-}
 .journey-steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
 .journey-step { font: inherit; cursor: pointer; background: var(--white); border: 1.5px solid var(--line); border-radius: 14px; padding: 14px 12px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; transition: border-color .4s ease, background .4s ease, transform .4s ease, box-shadow .4s ease; }
 .journey-step.lit { border-color: var(--gold2); background: var(--cream2); transform: translateY(-4px); box-shadow: 0 8px 20px rgba(90,60,10,.16); }
@@ -212,9 +185,6 @@ th { color: var(--brown2); font-size: 12px; text-transform: uppercase; letter-sp
   .slide-text h2 { font-size: 28px; }
   .slide-scrim { background: linear-gradient(0deg, rgba(20,12,2,.85) 0%, rgba(20,12,2,.4) 48%, rgba(20,12,2,0) 72%); }
   .slider-dots { left: 16px; }
-  /* On mobile the text sits at the bottom, full width — keep the bees flying
-     in the top band above the text so they never cross the words. */
-  .bee1 { top: 4%; } .bee2 { top: 15%; } .bee3 { top: 25%; } .bee4 { top: 9%; }
   .builder { grid-template-columns: 1fr; }
   .total-box { position: static; }
   .mobile-bar { display: flex; position: fixed; bottom: 0; left: 0; right: 0; background: var(--white); border-top: 1px solid var(--line); padding: 10px; gap: 8px; z-index: 90; }
@@ -225,8 +195,7 @@ th { color: var(--brown2); font-size: 12px; text-transform: uppercase; letter-sp
 @media (prefers-reduced-motion: reduce) {
   .slide-photo img { animation: none; }
   .slide { transition: none; }
-  .bee, .bee img { animation: none !important; }
-  .journey-bee, .journey-bee img, .journey-photo, .journey-caption { animation: none !important; }
+  .journey-photo, .journey-caption { animation: none !important; }
   .price-change { animation: none !important; }
   .section, .reveal { animation: none; transition: none; opacity: 1; transform: none; }
   .card, .card img, .btn, .chip { transition: none; }

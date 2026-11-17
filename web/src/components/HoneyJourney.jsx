@@ -2,7 +2,7 @@
 // Real macro close-ups crossfade with a slow Ken Burns zoom while the 5 steps
 // light up in turn. The bee flies across the film and rests by the hive.
 import { useEffect, useState } from 'react';
-import { BEE_FLY } from '../beeFly';
+import Bee3D from './Bee3D';
 
 const PX = (id) => `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=1200`;
 
@@ -33,7 +33,7 @@ export default function HoneyJourney() {
           ))}
           <div className="journey-scrim" />
           <div className="journey-bar"><i style={{ width: `${((active + 1) / STEPS.length) * 100}%` }} /></div>
-          <div className="journey-bee"><img src={BEE_FLY} alt="" /></div>
+          <Bee3D mode="journey" className="bee3d" />
           <div className="journey-caption" key={active}>
             <b>{s.n}. {s.title}</b>
             <span>{s.text}</span>
