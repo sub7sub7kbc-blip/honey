@@ -15,6 +15,16 @@ const PAYMENTS = [
   { id: 'jazzcash', name: 'JazzCash' }, { id: 'bank', name: 'Bank Transfer' },
 ];
 
+// Delivery shown in the cart and at checkout mirrors the server rule
+// (api/server.js): Rs 250, free once the subtotal reaches the free-above
+// threshold. Both read the same Admin settings (defaults 250 / 5000), so
+// the customer sees the real final total BEFORE placing the order.
+function deliveryFor(subtotal, settings) {
+  const fee = parseInt(settings?.delivery_fee || '250', 10);
+  const freeAbove = parseInt(settings?.free_above || '5000', 10);
+  return subtotal >= freeAbove ? 0 : fee;
+}
+
 function loadCart() { try { return JSON.parse(localStorage.getItem('goldenhive-cart') || '[]'); } catch { return []; } }
 
 export default function App() {
@@ -186,7 +196,7 @@ export default function App() {
       </footer>
 
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} onLoggedIn={(c) => { setCustomer(c); setShowAuth(false); }} />}
-      {showCart && <CartModal cart={cart} setCart={setCart} onClose={() => setShowCart(false)} onCheckout={() => { setShowCart(false); setShowCheckout(true); }} />}
+      {showCart && <CartModal cart={cart} setCart={setCart} settings={settings} onClose={() => setShowCart(false)} onCheckout={() => { setShowCart(false); setShowCheckout(true); }} />}
       {showCheckout && <CheckoutModal cart={cart} setCart={setCart} customer={customer} settings={settings} onClose={() => setShowCheckout(false)} onDone={(o) => { setShowCheckout(false); setOrderDone(o); }} />}
       {orderDone && <OrderDoneModal order={orderDone} whatsapp={whatsappLink(orderDone)} onClose={() => setOrderDone(null)} />}
     </div>
@@ -350,8 +360,9 @@ function CustomOrder({ products, customer, onDone }) {
   );
 }
 
-function CartModal({ cart, setCart, onClose, onCheckout }) {
+function CartModal({ cart, setCart, settings, onClose, onCheckout }) {
   const total = cart.reduce((a, i) => a + i.pricePkr * i.qty, 0);
+  const delivery = deliveryFor(total, settings);
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -365,7 +376,9 @@ function CartModal({ cart, setCart, onClose, onCheckout }) {
               <button className="btn ghost small" onClick={() => setCart(cart.filter((x) => x.productId !== i.productId))}>Remove</button>
             </div>
           ))}
-          <p><b>Subtotal: <span key={total} className="price-change">{fmt(total)}</span></b> <span className="muted">+ delivery (free above Rs 5,000)</span></p>
+          <p>Subtotal: <b>{fmt(total)}</b></p>
+          <p>Delivery: <b>{delivery === 0 ? 'FREE' : fmt(delivery)}</b> <span className="muted">(free above Rs 5,000)</span></p>
+          <p><b>Total: <span key={total} className="price-change">{fmt(total + delivery)}</span></b></p>
           <button className="btn" onClick={onCheckout}>Checkout</button>
         </>)}
         <div style={{ marginTop: 12 }}><button className="btn ghost small" onClick={onClose}>Close</button></div>
@@ -379,6 +392,7 @@ function CheckoutModal({ cart, setCart, customer, settings, onClose, onDone }) {
   const [busy, setBusy] = useState(false);
   const [payment, setPayment] = useState('cod');
   const total = cart.reduce((a, i) => a + i.pricePkr * i.qty, 0);
+  const delivery = deliveryFor(total, settings);
   const payInfo = { easypaisa: [settings.easypaisa_number, settings.easypaisa_title], jazzcash: [settings.jazzcash_number, settings.jazzcash_title], bank: [settings.bank_details, ''] }[payment];
 
   async function submit(e) {
@@ -424,7 +438,9 @@ function CheckoutModal({ cart, setCart, customer, settings, onClose, onDone }) {
             <div><label>Transaction ID</label><input name="tid" placeholder="At least 4 characters" /></div>
             <div><label>Paid-from number</label><input name="paidFrom" placeholder="At least 10 digits" /></div>
           </div>)}
-          <p><b>Total: <span key={total} className="price-change">{fmt(total)}</span></b> <span className="muted">+ delivery (free above Rs 5,000)</span></p>
+          <p>Subtotal: <b>{fmt(total)}</b></p>
+          <p>Delivery: <b>{delivery === 0 ? 'FREE' : fmt(delivery)}</b> <span className="muted">(free above Rs 5,000)</span></p>
+          <p><b>Total: <span key={total} className="price-change">{fmt(total + delivery)}</span></b></p>
           <button className="btn" disabled={busy || !cart.length}>{busy ? 'Placing order…' : 'Place order'}</button>
         </form>
         <div style={{ marginTop: 12 }}><button className="btn ghost small" onClick={onClose}>Cancel</button></div>
@@ -469,7 +485,7 @@ function TrackView({ trackQ, setTrackQ, tracked, setTracked }) {
           <h3>{o.code} — {fmt(o.totalPkr)}</h3>
           <p>{o.customerName} • {o.phone} • {o.city} — {o.address}</p>
           <p>Payment: {o.paymentMethod} ({o.paymentStatus}) {o.transactionId ? `• TID: ${o.transactionId}` : ''}</p>
-          <p>Items: {o.items.map((i) => `${i.name} × ${i.qty}`).join(', ')}</p>
+          <p>Items: {o.items.map((i) => `${i.name} ${i.size || ''} × ${i.qty}`).join(', ')}</p>
           <div className="timeline">
             {o.timeline?.map((t, i) => <div key={i}><b>{t.status}</b> — {new Date(t.created_at).toLocaleString()}</div>)}
           </div>
