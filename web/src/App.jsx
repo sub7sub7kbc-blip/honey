@@ -102,6 +102,7 @@ export default function App() {
         {view === 'shop' && (
           <>
             {settings.slider_enabled !== 'false' && <Slider products={products} settings={settings} onAdd={addToCart} onBuyNow={buyNow} />}
+            <FlowerStrip />
             <div className="section reveal">
               <h2>{settings.shop_heading || 'Pure honey, from hive to your home'}</h2>
               <p className="sub">{settings.tagline || '100% Pure Honey'} — no account, no password needed to order. Track by your mobile number or order ID.</p>
@@ -188,6 +189,30 @@ export default function App() {
       {showCart && <CartModal cart={cart} setCart={setCart} onClose={() => setShowCart(false)} onCheckout={() => { setShowCart(false); setShowCheckout(true); }} />}
       {showCheckout && <CheckoutModal cart={cart} setCart={setCart} customer={customer} settings={settings} onClose={() => setShowCheckout(false)} onDone={(o) => { setShowCheckout(false); setOrderDone(o); }} />}
       {orderDone && <OrderDoneModal order={orderDone} whatsapp={whatsappLink(orderDone)} onClose={() => setOrderDone(null)} />}
+    </div>
+  );
+}
+
+function FlowerStrip() {
+  const flowers = [
+    { photo: 'https://images.pexels.com/photos/37477172/pexels-photo-37477172.jpeg?auto=compress&cs=tinysrgb&w=800', name: 'Beri ke phool', honey: 'Sidr Honey', note: 'Beri ke chhote safed phoolon ka gehra ras' },
+    { photo: 'https://images.pexels.com/photos/31428888/pexels-photo-31428888.jpeg?auto=compress&cs=tinysrgb&w=800', name: 'Acacia ke phool', honey: 'Acacia Honey', note: 'Peelay mimosa phoolon ka halka, saaf shehad' },
+    { photo: 'https://images.pexels.com/photos/12656534/pexels-photo-12656534.jpeg?auto=compress&cs=tinysrgb&w=800', name: 'Sarson ke phool', honey: 'Sarson Honey', note: 'Peelay sarson ke kheton se, halki karwahat' },
+    { photo: 'https://images.pexels.com/photos/12485548/pexels-photo-12485548.jpeg?auto=compress&cs=tinysrgb&w=800', name: 'Jangli phool', honey: 'Multiflora Honey', note: 'Rang-birange jangli phoolon ka mix' },
+  ];
+  return (
+    <div className="flower-strip reveal">
+      <h2>Asli phool, asli shehad</h2>
+      <p className="sub">Ye wohi phool hain jin se hamara shehad banta hai — no sugar, no mixing, sirf phoolon ka ras.</p>
+      <div className="flower-grid">
+        {flowers.map((f) => (
+          <div className="flower-card" key={f.honey}>
+            <img src={f.photo} alt={f.name} loading="lazy" />
+            <b>{f.name}</b>
+            <span>{f.honey} — {f.note}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

@@ -106,6 +106,14 @@ label { font-size: 13px; font-weight: 600; color: var(--brown2); display: block;
 .dot-counter { font-size: 13px; font-weight: 700; color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,.6); margin-left: 6px; }
 
 .section { margin-top: 28px; animation: fadeUp .7s ease both; }
+/* Flower strip: the real flowers the honey comes from, as a background band. */
+.flower-strip { background: var(--cream2); border: 1px solid var(--line); border-radius: 16px; padding: 20px; margin-top: 28px; }
+.flower-strip h2 { font-size: 24px; margin: 0 0 4px; }
+.flower-strip p.sub { color: var(--muted); margin: 0 0 16px; }
+.flower-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.flower-card img { width: 100%; height: 150px; object-fit: cover; border-radius: 12px; display: block; }
+.flower-card b { display: block; margin-top: 8px; font-size: 15px; }
+.flower-card span { color: var(--muted); font-size: 13px; }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 /* Scroll reveal: sections fade in as they enter the viewport (JS adds .in). */
 .reveal { opacity: 0; transform: translateY(18px); transition: opacity .7s ease, transform .7s ease; animation: none; }
@@ -186,6 +194,8 @@ th { color: var(--brown2); font-size: 12px; text-transform: uppercase; letter-sp
   .slide-scrim { background: linear-gradient(0deg, rgba(20,12,2,.85) 0%, rgba(20,12,2,.4) 48%, rgba(20,12,2,0) 72%); }
   .slider-dots { left: 16px; }
   .builder { grid-template-columns: 1fr; }
+  .flower-grid { grid-template-columns: repeat(2, 1fr); }
+  .flower-card img { height: 110px; }
   .total-box { position: static; }
   .mobile-bar { display: flex; position: fixed; bottom: 0; left: 0; right: 0; background: var(--white); border-top: 1px solid var(--line); padding: 10px; gap: 8px; z-index: 90; }
   .mobile-bar .btn { flex: 1; }

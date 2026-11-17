@@ -4,6 +4,16 @@ import Bee3D from './Bee3D';
 
 const TYPES = ['sidr', 'acacia', 'multiflora', 'sarson', 'comb'];
 
+// Hero background = the REAL flower the honey comes from (verified Pexels
+// photos). The jar photos stay in the product grid below; the comb slide
+// keeps its honeycomb photo (comb comes from no single flower).
+const FLOWER_BG = {
+  sidr: 'https://images.pexels.com/photos/37477172/pexels-photo-37477172.jpeg?auto=compress&cs=tinysrgb&w=1200',
+  acacia: 'https://images.pexels.com/photos/31428888/pexels-photo-31428888.jpeg?auto=compress&cs=tinysrgb&w=1200',
+  multiflora: 'https://images.pexels.com/photos/12485548/pexels-photo-12485548.jpeg?auto=compress&cs=tinysrgb&w=1200',
+  sarson: 'https://images.pexels.com/photos/12656534/pexels-photo-12656534.jpeg?auto=compress&cs=tinysrgb&w=1200',
+};
+
 export default function Slider({ products, settings, onAdd, onBuyNow }) {
   const slides = TYPES.map((t) => {
     const p = products.find((x) => x.type === t && x.size === '500g') || products.find((x) => x.type === t);
@@ -38,7 +48,7 @@ export default function Slider({ products, settings, onAdd, onBuyNow }) {
       }}>
       {slides.map((p, i) => (
         <div key={p.type} className={'slide' + (i === idx ? ' active' : '')} aria-hidden={i !== idx}>
-          <div className="slide-photo"><img src={resolvePhoto(p.photo)} alt={p.name} /></div>
+          <div className="slide-photo"><img src={FLOWER_BG[p.type] || resolvePhoto(p.photo)} alt={p.name} /></div>
           <div className="slide-scrim" />
           <div className="slide-text">
             <span className="pill">100% PURE HONEY</span>
