@@ -40,6 +40,10 @@ label { font-size: 13px; font-weight: 600; color: var(--brown2); display: block;
 .slide.active .slide-text > *:nth-child(4) { animation-delay: .22s; }
 .slide.active .slide-text > *:nth-child(5) { animation-delay: .28s; }
 .slide.active .slide-text > *:nth-child(6) { animation-delay: .34s; }
+/* Slide change: the outgoing slide's text fades out fast (0.2s) so it never
+   ghosts over the incoming slide's text while the photo crossfades slowly. */
+.slide-text { transition: opacity .2s ease; }
+.slide:not(.active) .slide-text { opacity: 0; }
 @keyframes slide-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
 /* Flying bees across the slider — a real bee photo, one big hero bee flying
    the full width of the slider, plus smaller bees for depth. */
