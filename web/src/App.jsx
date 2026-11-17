@@ -223,7 +223,7 @@ function OrderBuilder({ products, onAdd, onBuy }) {
           {product ? (<>
             <p><b>{product.name}</b> — {product.size} × {qty}</p>
             <p className="muted">{product.blossomLabel}</p>
-            <p className="price">{total ? fmt(total) : 'Price coming soon'}</p>
+            <p className="price"><span key={total} className="price-change">{total ? fmt(total) : 'Price coming soon'}</span></p>
             <div className="row">
               <button className="btn" disabled={!total} onClick={() => onAdd(product, qty)}>Add to Cart</button>
               <button className="btn ghost" disabled={!total} onClick={() => onBuy(product, qty)}>Buy Now</button>
@@ -293,7 +293,7 @@ function CustomOrder({ products, customer, onDone }) {
         </div>
         <div className="panel total-box">
           <h3>Live estimate</h3>
-          <p className="price">{estimate ? fmt(estimate) : 'Price coming soon — set prices in Admin first'}</p>
+          <p className="price"><span key={estimate} className="price-change">{estimate ? fmt(estimate) : 'Price coming soon — set prices in Admin first'}</span></p>
           <p className="muted">+ delivery (free above Rs 5,000)</p>
           <button className="btn" disabled={!estimate} onClick={() => setShowForm(true)}>Continue to details</button>
         </div>
@@ -340,7 +340,7 @@ function CartModal({ cart, setCart, onClose, onCheckout }) {
               <button className="btn ghost small" onClick={() => setCart(cart.filter((x) => x.productId !== i.productId))}>Remove</button>
             </div>
           ))}
-          <p><b>Subtotal: {fmt(total)}</b> <span className="muted">+ delivery (free above Rs 5,000)</span></p>
+          <p><b>Subtotal: <span key={total} className="price-change">{fmt(total)}</span></b> <span className="muted">+ delivery (free above Rs 5,000)</span></p>
           <button className="btn" onClick={onCheckout}>Checkout</button>
         </>)}
         <div style={{ marginTop: 12 }}><button className="btn ghost small" onClick={onClose}>Close</button></div>
@@ -399,7 +399,7 @@ function CheckoutModal({ cart, setCart, customer, settings, onClose, onDone }) {
             <div><label>Transaction ID</label><input name="tid" placeholder="At least 4 characters" /></div>
             <div><label>Paid-from number</label><input name="paidFrom" placeholder="At least 10 digits" /></div>
           </div>)}
-          <p><b>Total: {fmt(total)}</b> <span className="muted">+ delivery (free above Rs 5,000)</span></p>
+          <p><b>Total: <span key={total} className="price-change">{fmt(total)}</span></b> <span className="muted">+ delivery (free above Rs 5,000)</span></p>
           <button className="btn" disabled={busy || !cart.length}>{busy ? 'Placing order…' : 'Place order'}</button>
         </form>
         <div style={{ marginTop: 12 }}><button className="btn ghost small" onClick={onClose}>Cancel</button></div>

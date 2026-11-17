@@ -60,20 +60,36 @@ label { font-size: 13px; font-weight: 600; color: var(--brown2); display: block;
 
 /* Honey journey — flower to hive. One bee flies the path while steps light up in turn. */
 .journey { overflow: hidden; }
-.journey-sky { position: relative; height: 170px; border-radius: 14px; overflow: hidden;
+.journey-sky { position: relative; height: 190px; border-radius: 14px; overflow: hidden;
   background: linear-gradient(180deg, #fdf1d7 0%, #fbeecb 55%, #f3e2ac 100%); margin-bottom: 16px; }
 .journey-path { position: absolute; inset: 0; width: 100%; height: 100%; }
-.journey-flower { position: absolute; left: 18px; bottom: 6px; }
-.journey-hive { position: absolute; right: 16px; bottom: 4px; }
-.journey-bee { position: absolute; left: 4%; top: 58%; animation: journey-fly 20s linear infinite; will-change: left, top; z-index: 3; }
+.journey-tag { position: absolute; top: 10px; z-index: 2; background: rgba(255,255,255,.85); color: var(--brown); font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); }
+.tag-flower { left: 12px; }
+.tag-hive { right: 12px; }
+.journey-flower { position: absolute; left: 16px; bottom: 4px; transform-origin: 50% 100%; animation: flower-sway 4s ease-in-out infinite alternate; }
+@keyframes flower-sway { from { transform: rotate(-2.5deg); } to { transform: rotate(2.5deg); } }
+.journey-sparkle { position: absolute; color: var(--gold2); font-size: 13px; animation: sparkle 20s ease-in-out infinite; opacity: 0; }
+.journey-sparkle.sp1 { left: 58px; bottom: 62px; }
+.journey-sparkle.sp2 { left: 76px; bottom: 48px; animation-delay: .6s; }
+.journey-sparkle.sp3 { left: 40px; bottom: 78px; animation-delay: 1.2s; }
+@keyframes sparkle { 0%, 2% { opacity: 0; transform: scale(.6); } 6%, 12% { opacity: 1; transform: scale(1.15); } 17%, 100% { opacity: 0; transform: scale(.6); } }
+.journey-hive { position: absolute; right: 14px; bottom: 4px; }
+.journey-drip { position: absolute; right: 42px; bottom: 2px; width: 9px; height: 12px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: var(--gold2); animation: honey-drip 20s ease-in infinite; opacity: 0; }
+@keyframes honey-drip { 0%, 52% { opacity: 0; transform: translateY(0); } 56% { opacity: 1; transform: translateY(0); } 70% { opacity: 1; transform: translateY(16px); } 76%, 100% { opacity: 0; transform: translateY(16px); } }
+.journey-bee { position: absolute; left: 2%; top: 64%; animation: journey-fly 20s linear infinite; will-change: left, top, opacity; z-index: 3; }
 .journey-bee svg { display: block; animation: bee-bob 1.6s ease-in-out infinite alternate; }
+/* The bee sits on the flower (0-16%), flies to the hive (16-52%), sits at the
+   hive (52-72%), then fades out and is back on the flower for the next loop. */
 @keyframes journey-fly {
-  0% { left: 4%; top: 58%; }
-  18% { left: 22%; top: 26%; }
-  38% { left: 45%; top: 52%; }
-  58% { left: 64%; top: 24%; }
-  78% { left: 82%; top: 48%; }
-  100% { left: 88%; top: 52%; }
+  0% { left: 2%; top: 64%; opacity: 0; }
+  4% { opacity: 1; }
+  16% { left: 2%; top: 64%; }
+  34% { left: 43%; top: 20%; }
+  52% { left: 83%; top: 58%; }
+  72% { left: 83%; top: 58%; }
+  88% { opacity: 1; }
+  94% { opacity: 0; }
+  100% { left: 2%; top: 64%; opacity: 0; }
 }
 .journey-steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
 .journey-step { background: var(--white); border: 1.5px solid var(--line); border-radius: 14px; padding: 14px 12px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; animation: step-glow 20s ease-in-out infinite; }
@@ -91,9 +107,10 @@ label { font-size: 13px; font-weight: 600; color: var(--brown2); display: block;
   25%, 100% { border-color: var(--line); background: var(--white); transform: translateY(0); box-shadow: none; }
 }
 @media (max-width: 760px) {
-  .journey-sky { height: 140px; }
+  .journey-sky { height: 160px; }
   .journey-steps { grid-template-columns: 1fr 1fr; }
   .journey-step:last-child { grid-column: 1 / -1; }
+  .tag-hive { font-size: 11px; padding: 2px 8px; }
 }
 .slide-text { padding: 48px 40px; display: flex; flex-direction: column; justify-content: center; gap: 10px; background: var(--cream); }
 .pill { display: inline-block; background: var(--gold); color: var(--brown); font-size: 12px; font-weight: 800; letter-spacing: 1px; padding: 6px 12px; border-radius: 20px; width: fit-content; }
@@ -117,29 +134,32 @@ label { font-size: 13px; font-weight: 600; color: var(--brown2); display: block;
 .reveal.in { opacity: 1; transform: none; }
 .section h2 { font-size: 24px; margin: 0 0 4px; }
 .section p.sub { color: var(--muted); margin: 0 0 16px; }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
-.card { background: var(--white); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; box-shadow: 0 2px 10px rgba(90,60,10,.06); transition: transform .25s ease, box-shadow .25s ease; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.card { background: var(--white); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; box-shadow: 0 2px 10px rgba(90,60,10,.06); transition: transform .25s ease, box-shadow .25s ease; }
 .card:hover { transform: translateY(-4px); box-shadow: 0 10px 24px rgba(90,60,10,.14); }
 .card img { transition: transform .5s ease; }
 .card:hover img { transform: scale(1.04); }
-.card img { width: 100%; height: 170px; object-fit: cover; display: block; }
+.card img { width: 100%; height: 130px; object-fit: cover; display: block; }
 /* Same honey, different size: vary the crop so sizes don't look identical. */
 .card img.ph-250g { object-position: center 20%; }
 .card img.ph-500g { object-position: center 50%; }
 .card img.ph-1kg { object-position: center 80%; }
 .card img.ph-400g { object-position: center 35%; }
-.card-body { padding: 14px; }
-.card-body h3 { margin: 0; font-size: 17px; }
-.card-body .size { color: var(--muted); font-size: 13px; margin: 2px 0 8px; }
+.card-body { padding: 10px 12px; }
+.card-body h3 { margin: 0; font-size: 15px; }
+.card-body .size { color: var(--muted); font-size: 12px; margin: 2px 0 6px; }
 .accent-bar { height: 5px; }
-.price-row { display: flex; align-items: baseline; gap: 8px; margin: 6px 0 10px; }
-.price { font-size: 19px; font-weight: 800; color: var(--gold2); }
+.price-row { display: flex; align-items: baseline; gap: 8px; margin: 4px 0 8px; }
+.price { font-size: 17px; font-weight: 800; color: var(--gold2); }
+/* Price-change animation: the total pops and flashes gold whenever its value changes. */
+.price-change { display: inline-block; animation: price-change .45s ease; }
+@keyframes price-change { 0% { transform: scale(1.22); color: var(--gold); } 100% { transform: scale(1); } }
 .compare { text-decoration: line-through; color: var(--muted); font-size: 14px; }
 .save { background: #e6f4ea; color: var(--green); font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 12px; }
 .coming { color: var(--muted); font-weight: 600; }
 .qty-row { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
 .qty-row .btn { flex: 1; white-space: nowrap; min-width: 0; }
-.card .qty-row .btn { font-size: 12px; padding: 8px 6px; }
+.card .qty-row .btn { font-size: 11px; padding: 7px 4px; }
 .qty-step button { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line); background: var(--cream); font-size: 16px; font-weight: 700; flex: none; }
 .qty-step span { min-width: 22px; text-align: center; font-weight: 700; }
 
@@ -198,7 +218,8 @@ th { color: var(--brown2); font-size: 12px; text-transform: uppercase; letter-sp
   .slide-photo img { animation: none; }
   .slide { transition: none; }
   .bee, .bee svg, .bee-wing { animation: none !important; }
-  .journey-bee, .journey-bee svg, .journey-step { animation: none !important; }
+  .journey-bee, .journey-bee svg, .journey-step, .journey-flower, .journey-sparkle, .journey-drip { animation: none !important; }
+  .price-change { animation: none !important; }
   .section, .reveal { animation: none; transition: none; opacity: 1; transform: none; }
   .card, .card img, .btn, .chip { transition: none; }
 }
