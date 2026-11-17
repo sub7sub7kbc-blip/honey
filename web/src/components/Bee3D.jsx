@@ -93,7 +93,7 @@ function wingTexture() {
   return canvasTexture(256, 128, (g, w, h) => {
     g.clearRect(0, 0, w, h);
     // smoky tint — strong enough to read as a wing, still translucent
-    g.fillStyle = 'rgba(215,210,200,0.45)';
+    g.fillStyle = 'rgba(215,210,200,0.55)';
     g.fillRect(0, 0, w, h);
     // veins fanning from the base (right edge = wing base in UV space)
     g.strokeStyle = 'rgba(70,58,44,0.8)';
@@ -199,7 +199,7 @@ function buildBee() {
   const wingMat = new THREE.MeshStandardMaterial({
     map: wingTexture(),
     transparent: true,
-    opacity: 0.85,
+    opacity: 0.9,
     roughness: 0.35,
     metalness: 0,
     side: THREE.DoubleSide,
@@ -289,10 +289,12 @@ export default function Bee3D({ mode = 'slider', className = '' }) {
 
     const bees = [];
     if (mode === 'slider') {
+      // Top band only: the text sits vertically centred on the left, so the
+      // bees fly above it (never over the words or buttons).
       const defs = [
-        { scale: 0.55, yBase: 2.6, loop: 24, phase: 0, z: -0.4 },
-        { scale: 0.42, yBase: 0.5, loop: 32, phase: 9, z: 0.3 },
-        { scale: 0.5, yBase: -1.5, loop: 28, phase: 17, z: 0.8 },
+        { scale: 0.55, yBase: 3.1, loop: 24, phase: 0, z: -0.4 },
+        { scale: 0.42, yBase: 2.6, loop: 32, phase: 9, z: 0.3 },
+        { scale: 0.5, yBase: 2.3, loop: 28, phase: 17, z: 0.8 },
       ];
       for (const d of defs) {
         const b = buildBee();
@@ -302,9 +304,10 @@ export default function Bee3D({ mode = 'slider', className = '' }) {
       }
     } else {
       const b = buildBee();
-      b.group.scale.setScalar(0.45);
+      b.group.scale.setScalar(0.32);
+      b.wingBase = 0.7; // wings held higher so they read on the busy film photos
       scene.add(b.group);
-      bees.push({ ...b, scale: 0.45, loop: 20, phase: 0, z: 0.3, yaw: 0 });
+      bees.push({ ...b, scale: 0.32, loop: 20, phase: 0, z: 0.3, yaw: 0 });
     }
 
     let w = 1;
@@ -344,14 +347,15 @@ export default function Bee3D({ mode = 'slider', className = '' }) {
           const speed = span / b.loop;
           b.x += speed * dt;
           // Portrait (mobile): the text sits at the bottom, so keep the bees
-          // in the top band above the words.
+          // in the top band above the words. Desktop: same idea, the text
+          // is vertically centred, so bees stay in the top band (y 2.2-3.3).
           const portrait = w / h < 1;
           if (b.x > halfW + 2.5) {
             b.x = -halfW - 2.5;
-            b.yBase = portrait ? 0.3 + Math.random() * 2.3 : -2.2 + Math.random() * 4.6;
+            b.yBase = portrait ? 0.3 + Math.random() * 2.3 : 2.2 + Math.random() * 1.1;
           }
-          const yBase = portrait ? Math.min(Math.max(b.yBase, 0.3), 2.6) : b.yBase;
-          const bob = Math.sin(t * 1.7 + b.phase) * 0.35;
+          const yBase = portrait ? Math.min(Math.max(b.yBase, 0.3), 2.6) : Math.min(Math.max(b.yBase, 2.2), 3.3);
+          const bob = Math.sin(t * 1.7 + b.phase) * 0.25;
           b.group.position.set(b.x, yBase + bob, b.z + Math.sin(t * 0.8 + b.phase) * 0.35);
           // slight nose-up pitch, like a real bee in flight
           b.group.rotation.set(Math.sin(t * 1.1 + b.phase) * 0.05, 0, 0.1 + Math.sin(t * 0.9 + b.phase) * 0.05);
