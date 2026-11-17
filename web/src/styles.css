@@ -32,7 +32,7 @@ label { font-size: 13px; font-weight: 600; color: var(--brown2); display: block;
 .wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px 60px; flex: 1; width: 100%; }
 
 .slider { position: relative; border-radius: 20px; overflow: hidden; height: 460px; margin: 18px 0; background: var(--cream2); box-shadow: 0 8px 30px rgba(90,60,10,.15); }
-.slide { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; opacity: 0; transition: opacity .8s ease, transform .8s ease; transform: scale(1.015); pointer-events: none; }
+.slide { position: absolute; inset: 0; opacity: 0; transition: opacity .8s ease, transform .8s ease; transform: scale(1.015); pointer-events: none; }
 .slide.active { opacity: 1; pointer-events: auto; transform: scale(1); }
 .slide.active .slide-text > * { animation: slide-rise .7s ease both; }
 .slide.active .slide-text > *:nth-child(2) { animation-delay: .08s; }
@@ -113,20 +113,24 @@ label { font-size: 13px; font-weight: 600; color: var(--brown2); display: block;
   .journey-steps { grid-template-columns: 1fr 1fr; }
   .journey-step:last-child { grid-column: 1 / -1; }
 }
-.slide-text { padding: 48px 40px; display: flex; flex-direction: column; justify-content: center; gap: 10px; background: var(--cream); }
-.pill { display: inline-block; background: var(--gold); color: var(--brown); font-size: 12px; font-weight: 800; letter-spacing: 1px; padding: 6px 12px; border-radius: 20px; width: fit-content; }
-.slide-text h2 { margin: 0; font-size: 40px; line-height: 1.1; }
-.slide-text p { margin: 0; color: var(--muted); font-size: 16px; }
-.slide-price { font-size: 22px; font-weight: 800; color: var(--gold2); }
-.slide-photo { position: relative; overflow: hidden; }
+/* Full-bleed slide: ONE photo background across the whole slider, text overlaid
+   on a dark scrim — no mixed cream panel + photo, so the slide reads as one scene. */
+.slide-photo { position: absolute; inset: 0; overflow: hidden; }
 .slide-photo img { width: 100%; height: 100%; object-fit: cover; animation: kenburns 6s ease-in-out infinite alternate; }
+.slide-scrim { position: absolute; inset: 0; z-index: 1; background: linear-gradient(90deg, rgba(20,12,2,.78) 0%, rgba(20,12,2,.45) 48%, rgba(20,12,2,0) 72%), linear-gradient(0deg, rgba(20,12,2,.55) 0%, rgba(20,12,2,0) 30%); pointer-events: none; }
+.slide-text { position: absolute; z-index: 2; left: 40px; top: 50%; transform: translateY(-50%); max-width: 500px; display: flex; flex-direction: column; justify-content: center; gap: 10px; color: #fff; text-shadow: 0 1px 10px rgba(0,0,0,.55); }
+.pill { display: inline-block; background: var(--gold); color: var(--brown); font-size: 12px; font-weight: 800; letter-spacing: 1px; padding: 6px 12px; border-radius: 20px; width: fit-content; }
+.slide-text h2 { margin: 0; font-size: 40px; line-height: 1.1; color: #fff; }
+.slide-text p { margin: 0; color: rgba(255,255,255,.88); font-size: 16px; }
+.slide-text .muted { color: rgba(255,255,255,.78); }
+.slide-price { font-size: 22px; font-weight: 800; color: var(--gold); }
 @keyframes kenburns { from { transform: scale(1); } to { transform: scale(1.08); } }
 .slider-arrow { position: absolute; bottom: 16px; z-index: 5; width: 44px; height: 44px; border-radius: 50%; border: none; background: rgba(255,253,248,.95); color: var(--brown); font-size: 20px; font-weight: 800; box-shadow: 0 2px 10px rgba(0,0,0,.2); }
 .slider-arrow.prev { right: 72px; } .slider-arrow.next { right: 16px; }
 .slider-dots { position: absolute; bottom: 18px; left: 40px; display: flex; gap: 8px; align-items: center; z-index: 5; }
-.dot { width: 10px; height: 10px; border-radius: 50%; border: none; background: #d8c49a; padding: 0; }
+.dot { width: 10px; height: 10px; border-radius: 50%; border: none; background: rgba(255,255,255,.55); padding: 0; }
 .dot.active { background: var(--gold2); width: 26px; border-radius: 6px; }
-.dot-counter { font-size: 13px; font-weight: 700; color: var(--brown2); margin-left: 6px; }
+.dot-counter { font-size: 13px; font-weight: 700; color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,.6); margin-left: 6px; }
 
 .section { margin-top: 28px; animation: fadeUp .7s ease both; }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
@@ -204,10 +208,13 @@ th { color: var(--brown2); font-size: 12px; text-transform: uppercase; letter-sp
 .footer nav button { background: none; border: none; font-weight: 700; color: var(--gold2); font-size: 14px; padding: 4px 8px; }
 @media (max-width: 760px) {
   .slider { height: 560px; }
-  .slide { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
-  .slide-text { padding: 22px; order: 2; }
+  .slide-text { left: 16px; right: 16px; top: auto; bottom: 72px; transform: none; max-width: none; }
   .slide-text h2 { font-size: 28px; }
-  .slide-photo { order: 1; }
+  .slide-scrim { background: linear-gradient(0deg, rgba(20,12,2,.85) 0%, rgba(20,12,2,.4) 48%, rgba(20,12,2,0) 72%); }
+  .slider-dots { left: 16px; }
+  /* On mobile the text sits at the bottom, full width — keep the bees flying
+     in the top band above the text so they never cross the words. */
+  .bee1 { top: 4%; } .bee2 { top: 15%; } .bee3 { top: 25%; } .bee4 { top: 9%; }
   .builder { grid-template-columns: 1fr; }
   .total-box { position: static; }
   .mobile-bar { display: flex; position: fixed; bottom: 0; left: 0; right: 0; background: var(--white); border-top: 1px solid var(--line); padding: 10px; gap: 8px; z-index: 90; }

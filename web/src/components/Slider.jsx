@@ -38,6 +38,8 @@ export default function Slider({ products, settings, onAdd, onBuyNow }) {
       }}>
       {slides.map((p, i) => (
         <div key={p.type} className={'slide' + (i === idx ? ' active' : '')} aria-hidden={i !== idx}>
+          <div className="slide-photo"><img src={resolvePhoto(p.photo)} alt={p.name} /></div>
+          <div className="slide-scrim" />
           <div className="slide-text">
             <span className="pill">100% PURE HONEY</span>
             <h2>{p.name}</h2>
@@ -49,7 +51,6 @@ export default function Slider({ products, settings, onAdd, onBuyNow }) {
               <button className="btn ghost" disabled={!p.pricePkr} onClick={() => onBuyNow(p)}>Order Now</button>
             </div>
           </div>
-          <div className="slide-photo"><img src={resolvePhoto(p.photo)} alt={p.name} /></div>
         </div>
       ))}
       <div className="bees" aria-hidden="true">
