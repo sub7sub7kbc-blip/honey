@@ -185,10 +185,10 @@ export default function Admin({ shop, reloadShop }) {
 
       {tab === 'Customers' && (<div className="panel">
         {customers.length === 0 ? <p className="muted">No customers yet.</p> : (
-          <table><thead><tr><th>Phone</th><th>Name</th><th>Orders</th><th>Total spent</th><th>Last order</th></tr></thead>
+          <div style={{ overflowX: 'auto' }}><table><thead><tr><th>Phone</th><th>Name</th><th>Orders</th><th>Total spent</th><th>Last order</th></tr></thead>
           <tbody>{customers.map((c) => (
             <tr key={c.phone}><td>{c.phone}</td><td>{c.name}</td><td>{c.orders}</td><td>{fmt(c.total_spent)}</td><td>{c.last_order ? new Date(c.last_order).toLocaleString() : ''}</td></tr>
-          ))}</tbody></table>
+          ))}</tbody></table></div>
         )}
       </div>)}
 

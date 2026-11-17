@@ -188,6 +188,16 @@ th { color: var(--brown2); font-size: 12px; text-transform: uppercase; letter-sp
 .footer nav { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-bottom: 10px; }
 .footer nav button { background: none; border: none; font-weight: 700; color: var(--gold2); font-size: 14px; padding: 4px 8px; }
 @media (max-width: 760px) {
+  /* Compact header: logo + actions on row 1, nav as one scrollable row on
+     row 2 — the old wrapped nav made the sticky header ~197px tall. */
+  .header { gap: 8px; padding: 10px 12px; }
+  .logo { font-size: 22px; }
+  .nav { order: 3; width: 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav button { white-space: nowrap; flex: none; }
+  /* Footer: the fixed mobile bar (81px) covers the page bottom, so give
+     the footer room or the copyright line hides behind it. */
+  .footer { padding-bottom: 100px; }
   .slider { height: 560px; }
   .slide-text { left: 16px; right: 16px; top: auto; bottom: 72px; transform: none; max-width: none; }
   .slide-text h2 { font-size: 28px; }

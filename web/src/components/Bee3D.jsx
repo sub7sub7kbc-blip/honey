@@ -339,6 +339,15 @@ export default function Bee3D({ mode = 'slider', className = '' }) {
     const visibleHeight = () => 2 * Math.tan(THREE.MathUtils.degToRad(17.5)) * 12;
     const visibleWidth = () => visibleHeight() * (w / h);
 
+    // Spread the bees across the flight path at start (phase = position in
+    // the loop). They used to all start at x: -8, which is in-frame on a
+    // wide desktop but far off-screen on a phone — the hero then showed no
+    // bee for the first ~15s, and the pack crossed together after that.
+    if (mode === 'slider') {
+      const hw = visibleWidth() / 2;
+      for (const b of bees) b.x = -hw - 2.5 + (b.phase / b.loop) * (hw * 2 + 5);
+    }
+
     const flap = (tt, phase = 0) => 0.12 + Math.sin(tt * Math.PI * 2 * 19 + phase) * 0.45;
 
     const render = () => {
@@ -352,16 +361,16 @@ export default function Bee3D({ mode = 'slider', className = '' }) {
           const speed = span / b.loop;
           b.x += speed * dt;
           // Portrait (mobile): the text sits at the bottom, so keep the bees
-          // in the top band above the words. Desktop: same idea, the text
-          // is vertically centred, so bees stay in the top band (y 2.55-2.75,
-          // bob 0.1) — high enough to clear the "100% PURE HONEY" pill at
-          // y 1.96, low enough that the wings never clip at the top edge.
+          // in the top band above the words. The pill's top edge sits at
+          // world y = 0.23 on a phone (bottom-anchored text, 560px slider),
+          // and the lowest visible bee pixel is ~0.25 below its centre, so
+          // the centre must stay above ~0.5 — floor 0.7 clears it by ~9px.
           const portrait = w / h < 1;
           if (b.x > halfW + 2.5) {
             b.x = -halfW - 2.5;
-            b.yBase = portrait ? 0.3 + Math.random() * 2.3 : 2.55 + Math.random() * 0.2;
+            b.yBase = portrait ? 0.7 + Math.random() * 1.9 : 2.55 + Math.random() * 0.2;
           }
-          const yBase = portrait ? Math.min(Math.max(b.yBase, 0.3), 2.6) : Math.min(Math.max(b.yBase, 2.55), 2.75);
+          const yBase = portrait ? Math.min(Math.max(b.yBase, 0.7), 2.6) : Math.min(Math.max(b.yBase, 2.55), 2.75);
           const bob = Math.sin(t * 1.7 + b.phase) * 0.1;
           b.group.position.set(b.x, yBase + bob, b.z + Math.sin(t * 0.8 + b.phase) * 0.35);
           // slight nose-up pitch, like a real bee in flight
