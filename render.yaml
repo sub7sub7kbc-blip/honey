@@ -1,0 +1,31 @@
+# GoldenHive — live deploy (GitHub + Render + Neon, all free tiers)
+# GitHub holds the code, Render runs it, Neon holds the data.
+# See README.md for the step-by-step.
+
+services:
+  # Frontend — React + Vite static site (never sleeps on Render free tier)
+  - type: web
+    name: goldenhive-web
+    env: static
+    buildCommand: cd web && npm install && npm run build
+    staticPublishPath: web/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://goldenhive-api.onrender.com
+        # CHANGE this to your real API service URL after first deploy,
+        # then redeploy the web service once.
+
+  # API — Node + Express web service (free tier, sleeps after 15 min idle)
+  - type: web
+    name: goldenhive-api
+    env: node
+    buildCommand: cd api && npm install
+    startCommand: cd api && npm start
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: DATABASE_URL
+        sync: false # set in Render dashboard from Neon (never commit it)
+      - key: JWT_SECRET
+        generateValue: true
+      - key: NODE_ENV
+        value: production
