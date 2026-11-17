@@ -56,6 +56,45 @@ async function migrate() {
     ['https://images.pexels.com/photos/30027910/pexels-photo-30027910.jpeg?auto=compress&cs=tinysrgb&w=1200']);
   await pool.query(`UPDATE products SET photo=$1 WHERE photo LIKE '%photo-1587049352851-8d4e89134724%'`,
     ['https://images.pexels.com/photos/3424406/pexels-photo-3424406.jpeg?auto=compress&cs=tinysrgb&w=1200']);
+  // Product photos (2026-11-17): every product gets its OWN photo — the seed
+  // reused one photo per type (3x each) and two Unsplash URLs. Update only
+  // rows still on the old photo, so a photo set later in Admin is never
+  // reverted. (Pexels IDs verified 200 + visually confirmed as honey.)
+  const photoFix = [
+    ['sidr', '500g', '8805026', '8500508'],
+    ['sidr', '1kg', '8805026', '5634207'],
+    ['acacia', '250g', '1558642452-9d2a7deb7f62', '4480158'],
+    ['acacia', '500g', '1558642452-9d2a7deb7f62', '8633349'],
+    ['acacia', '1kg', '1558642452-9d2a7deb7f62', '6617488'],
+    ['multiflora', '250g', '1471943311424-646960669fbc', '11284797'],
+    ['multiflora', '500g', '1471943311424-646960669fbc', '5518299'],
+    ['multiflora', '1kg', '1471943311424-646960669fbc', '5865194'],
+    ['sarson', '250g', '30027910', '8500502'],
+    ['sarson', '500g', '30027910', '5634210'],
+    ['sarson', '1kg', '30027910', '6422025'],
+  ];
+  for (const [type, size, oldId, newId] of photoFix) {
+    await pool.query(
+      `UPDATE products SET photo=$1 WHERE type=$2 AND size=$3 AND photo LIKE $4`,
+      [`https://images.pexels.com/photos/${newId}/pexels-photo-${newId}.jpeg?auto=compress&cs=tinysrgb&w=1200`, type, size, `%${oldId}%`]);
+  }
+  // TEST prices (2026-11-17): fill in a price only where none is set, so the
+  // shop can be tested end-to-end (Add to Cart / Builder / Custom Order all
+  // need a price). These are the test prices from the TEST products file —
+  // replace with real prices in Admin before launch. Never overwrites a
+  // price set later (AND price_pkr IS NULL).
+  const testPrices = [
+    ['sidr', '250g', 1450], ['sidr', '500g', 2750], ['sidr', '1kg', 5200],
+    ['acacia', '250g', 950], ['acacia', '500g', 1750], ['acacia', '1kg', 3300],
+    ['multiflora', '250g', 850], ['multiflora', '500g', 1550], ['multiflora', '1kg', 2900],
+    ['sarson', '250g', 750], ['sarson', '500g', 1350], ['sarson', '1kg', 2500],
+    ['comb', '400g', 1800],
+  ];
+  for (const [type, size, price] of testPrices) {
+    await pool.query(
+      `UPDATE products SET price_pkr=$1 WHERE type=$2 AND size=$3 AND price_pkr IS NULL`,
+      [price, type, size]);
+  }
   dbUp = true;
 }
 
