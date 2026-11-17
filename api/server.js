@@ -47,6 +47,15 @@ async function migrate() {
     const seed = fs.readFileSync(path.join(__dirname, 'seed.sql'), 'utf8');
     await pool.query(seed);
   }
+  // Photo fix (2026-11-17 audit): the original seed used a watermelon photo for
+  // Sidr, seedlings for Sarson and a 404 Unsplash URL for Raw Honeycomb.
+  // Correct any seeded rows still pointing at those URLs (idempotent).
+  await pool.query(`UPDATE products SET photo=$1 WHERE photo LIKE '%photo-1587049352846-4a222e784d38%'`,
+    ['https://images.pexels.com/photos/8805026/pexels-photo-8805026.jpeg?auto=compress&cs=tinysrgb&w=1200']);
+  await pool.query(`UPDATE products SET photo=$1 WHERE photo LIKE '%photo-1466692476868-aef1dfb1e735%'`,
+    ['https://images.pexels.com/photos/30027910/pexels-photo-30027910.jpeg?auto=compress&cs=tinysrgb&w=1200']);
+  await pool.query(`UPDATE products SET photo=$1 WHERE photo LIKE '%photo-1587049352851-8d4e89134724%'`,
+    ['https://images.pexels.com/photos/3424406/pexels-photo-3424406.jpeg?auto=compress&cs=tinysrgb&w=1200']);
   dbUp = true;
 }
 
@@ -134,6 +143,11 @@ app.get('/api/v1/health', async (req, res) => {
 });
 
 // ---- Shop (public) ----
+app.get('/api/v1/products', requireDb, async (req, res) => {
+  const { rows: products } = await pool.query('SELECT * FROM products ORDER BY display_order ASC, id ASC');
+  res.json({ products: products.map(publicProduct) });
+});
+
 app.get('/api/v1/shop', requireDb, async (req, res) => {
   const { rows: products } = await pool.query('SELECT * FROM products ORDER BY display_order ASC, id ASC');
   const s = await getSettings();

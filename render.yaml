@@ -19,6 +19,7 @@ services:
   - type: web
     name: goldenhive-api
     env: node
+    plan: free
     buildCommand: cd api && npm install
     startCommand: cd api && npm start
     healthCheckPath: /api/v1/health

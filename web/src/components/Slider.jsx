@@ -3,6 +3,22 @@ import { api, fmt, resolvePhoto } from '../api';
 
 const TYPES = ['sidr', 'acacia', 'multiflora', 'sarson', 'comb'];
 
+// Little honey bee (pure SVG, no image needed) that flies across the slider.
+function Bee({ cls }) {
+  return (
+    <span className={'bee ' + cls} aria-hidden="true">
+      <svg viewBox="0 0 48 34" width="34" height="24">
+        <ellipse className="bee-wing" cx="19" cy="8" rx="9" ry="5" fill="#ffffff" opacity=".85" />
+        <ellipse className="bee-wing wing2" cx="30" cy="7" rx="8" ry="4.5" fill="#ffffff" opacity=".6" />
+        <ellipse cx="24" cy="20" rx="13" ry="9" fill="#e9a820" />
+        <path d="M18 12 q-2 8 0 16 M26 11 q-2 9 0 17" stroke="#4a2f14" strokeWidth="3.4" fill="none" />
+        <circle cx="36" cy="18" r="5.5" fill="#4a2f14" />
+        <circle cx="38" cy="16" r="1.2" fill="#ffffff" />
+      </svg>
+    </span>
+  );
+}
+
 export default function Slider({ products, settings, onAdd, onBuyNow }) {
   const slides = TYPES.map((t) => {
     const p = products.find((x) => x.type === t && x.size === '500g') || products.find((x) => x.type === t);
@@ -51,6 +67,9 @@ export default function Slider({ products, settings, onAdd, onBuyNow }) {
           <div className="slide-photo"><img src={resolvePhoto(p.photo)} alt={p.name} /></div>
         </div>
       ))}
+      <div className="bees" aria-hidden="true">
+        <Bee cls="bee1" /><Bee cls="bee2" /><Bee cls="bee3" /><Bee cls="bee4" />
+      </div>
       <button className="slider-arrow prev" aria-label="Previous" onClick={() => setIdx((i) => (i - 1 + slides.length) % slides.length)}>‹</button>
       <button className="slider-arrow next" aria-label="Next" onClick={() => setIdx((i) => (i + 1) % slides.length)}>›</button>
       <div className="slider-dots">

@@ -37,6 +37,16 @@ export default function App() {
     catch (e) { setLoadErr(e.message); }
   }
   useEffect(() => { load(); }, []);
+  // Scroll reveal: fade sections in as they enter the viewport.
+  useEffect(() => {
+    const els = document.querySelectorAll('.reveal:not(.in)');
+    if (!('IntersectionObserver' in window)) { els.forEach((el) => el.classList.add('in')); return; }
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((en) => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } });
+    }, { threshold: 0.12 });
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, [view, products.length]);
   useEffect(() => { localStorage.setItem('goldenhive-cart', JSON.stringify(cart)); }, [cart]);
   useEffect(() => {
     const t = localStorage.getItem('goldenhive-token');
@@ -91,7 +101,7 @@ export default function App() {
         {view === 'shop' && (
           <>
             {settings.slider_enabled !== 'false' && <Slider products={products} settings={settings} onAdd={addToCart} onBuyNow={buyNow} />}
-            <div className="section">
+            <div className="section reveal">
               <h2>{settings.shop_heading || 'Pure honey, from hive to your home'}</h2>
               <p className="sub">{settings.tagline || '100% Pure Honey'} — no account, no password needed to order. Track by your mobile number or order ID.</p>
               <div className="row" style={{ marginBottom: 16 }}>
@@ -102,7 +112,7 @@ export default function App() {
                 {products.map((p) => (
                   <div className="card" key={p.id}>
                     <div className="accent-bar" style={{ background: p.accent }} />
-                    {p.photo && <img src={resolvePhoto(p.photo)} alt={p.name} />}
+                    {p.photo && <img src={resolvePhoto(p.photo)} alt={p.name} className={'ph-' + p.size} />}
                     <div className="card-body">
                       <h3>{p.name}</h3>
                       <p className="size">{p.size} • {p.blossomLabel}</p>
@@ -120,9 +130,16 @@ export default function App() {
                     </div>
                   </div>
                 ))}
+                <div className="card" style={{ background: 'var(--cream2)' }}>
+                  <div className="card-body" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 8, minHeight: 170 }}>
+                    <h3>Can't decide?</h3>
+                    <p className="muted" style={{ fontSize: 13, margin: 0 }}>Build your own order — pick the honey, size and quantity.</p>
+                    <button className="btn" onClick={() => setView('builder')}>Build My Order →</button>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="section">
+            <div className="section reveal">
               <h2>Order karna bohat asaan hai</h2>
               <div className="steps">
                 <div className="step"><b>1. Choose honey</b><span>Pick a honey type and size, or build a custom order.</span></div>
@@ -131,7 +148,7 @@ export default function App() {
                 <div className="step"><b>4. Track it</b><span>Track by the mobile number you ordered with, or your order ID.</span></div>
               </div>
             </div>
-            <div className="section panel">
+            <div className="section panel reveal">
               <h2 style={{ marginTop: 0 }}>Our story</h2>
               <p>{settings.story_text}</p>
               <p>{(function () { try { return JSON.parse(settings.story_points || '[]'); } catch { return []; } })().map((s) => <span key={s} className="save" style={{ marginRight: 6 }}>{s}</span>)}</p>
@@ -153,8 +170,16 @@ export default function App() {
       </div>
 
       <footer className="footer">
+        <nav>
+          <button onClick={() => setView('shop')}>Shop</button>
+          <button onClick={() => setView('builder')}>Order Builder</button>
+          <button onClick={() => setView('custom')}>Custom Order</button>
+          <button onClick={() => setView('track')}>Track Order</button>
+          <button onClick={() => setView('admin')}>Admin</button>
+        </nav>
         <p>{settings.footer_text || 'GoldenHive — 100% pure honey, delivered across Pakistan.'}</p>
         <p className="muted">We accept: Cash on Delivery • EasyPaisa • JazzCash • Bank Transfer</p>
+        <p className="muted">© 2026 GoldenHive. All rights reserved.</p>
       </footer>
 
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} onLoggedIn={(c) => { setCustomer(c); setShowAuth(false); }} />}
@@ -179,14 +204,14 @@ function OrderBuilder({ products, onAdd, onBuy }) {
         <div className="panel">
           <label>Step 1 — Choose honey</label>
           <div className="chips">{TYPES.map((t) => (
-            <button key={t.id} className={'chip' + (type === t.id ? ' active' : '')} onClick={() => setType(t.id)}>{t.name}</button>
+            <button key={t.id} className={'chip' + (type === t.id ? ' active' : '')} onClick={() => { setType(t.id); if (t.id === 'comb') setSize('400g'); else if (size === '400g') setSize('500g'); }}>{t.name}</button>
           ))}</div>
           <label>Step 2 — Choose size</label>
-          <div className="chips">{['250g', '500g', '1kg'].map((s) => (
-            <button key={s} className={'chip' + (size === s ? ' active' : '')} onClick={() => setSize(s)} disabled={type === 'comb'}>{s}</button>
+          <div className="chips">{(type === 'comb' ? ['400g'] : ['250g', '500g', '1kg']).map((s) => (
+            <button key={s} className={'chip' + (size === s ? ' active' : '')} onClick={() => setSize(s)}>{s}</button>
           ))}{type === 'comb' && <span className="muted"> Honeycomb comes in 400g only.</span>}</div>
           <label>Step 3 — Quantity</label>
-          <div className="qty-row">
+          <div className="qty-row qty-step">
             <button onClick={() => setQty(Math.max(1, qty - 1))}>−</button><span>{qty}</span>
             <button onClick={() => setQty(Math.min(99, qty + 1))}>+</button>
           </div>
@@ -194,7 +219,7 @@ function OrderBuilder({ products, onAdd, onBuy }) {
         <div className="panel total-box">
           <h3>Your order</h3>
           {product ? (<>
-            <p><b>{product.name}</b> — {product.size}</p>
+            <p><b>{product.name}</b> — {product.size} × {qty}</p>
             <p className="muted">{product.blossomLabel}</p>
             <p className="price">{total ? fmt(total) : 'Price coming soon'}</p>
             <div className="row">
@@ -249,11 +274,12 @@ function CustomOrder({ products, customer, onDone }) {
         <div className="panel">
           <label>Honey type</label>
           <div className="chips">{TYPES.map((t) => (
-            <button key={t.id} className={'chip' + (type === t.id ? ' active' : '')} onClick={() => setType(t.id)}>{t.name}</button>
+            <button key={t.id} className={'chip' + (type === t.id ? ' active' : '')} onClick={() => { setType(t.id); if (t.id === 'comb') setGrams((g) => Math.min(g, 400)); }}>{t.name}</button>
           ))}</div>
-          <label>Quantity: {grams}g (100g – 5kg)</label>
-          <input type="range" min="100" max="5000" step="50" value={grams} onChange={(e) => setGrams(parseInt(e.target.value, 10))} />
-          <div className="chips">{[250, 500, 1000, 2000].map((g) => (
+          <label>Quantity: {grams}g ({type === 'comb' ? '100g – 400g (honeycomb)' : '100g – 5kg'})</label>
+          <input type="range" min="100" max={type === 'comb' ? 400 : 5000} step="50" value={grams} onChange={(e) => setGrams(parseInt(e.target.value, 10))} />
+          <div className="row" style={{ justifyContent: 'space-between' }}><span className="muted">100g</span><span className="muted">{type === 'comb' ? '400g' : '5kg'}</span></div>
+          <div className="chips">{[250, 500, 1000, 2000, 5000].filter((g) => type !== 'comb' || g <= 400).map((g) => (
             <button key={g} className={'chip' + (grams === g ? ' active' : '')} onClick={() => setGrams(g)}>{g >= 1000 ? g / 1000 + 'kg' : g + 'g'}</button>
           ))}</div>
           <div className="row">
@@ -261,7 +287,7 @@ function CustomOrder({ products, customer, onDone }) {
             <div><label>Packing</label><select value={packaging} onChange={(e) => setPackaging(e.target.value)}><option value="standard">Standard</option><option value="gift">Gift box</option></select></div>
             <div><label>Purpose</label><select value={purpose} onChange={(e) => setPurpose(e.target.value)}><option value="home">Home</option><option value="gift">Gift</option><option value="business">Business</option></select></div>
           </div>
-          {packaging === 'gift' && (<><label>Gift note</label><input value={giftNote} onChange={(e) => setGiftNote(e.target.value)} placeholder="Write your gift message" /></>)}
+          {(packaging === 'gift' || purpose === 'gift') && (<><label>Gift note</label><input value={giftNote} onChange={(e) => setGiftNote(e.target.value)} placeholder="Write your gift message" /></>)}
         </div>
         <div className="panel total-box">
           <h3>Live estimate</h3>
@@ -307,7 +333,7 @@ function CartModal({ cart, setCart, onClose, onCheckout }) {
           {cart.map((i) => (
             <div key={i.productId} className="row" style={{ alignItems: 'center', borderBottom: '1px solid var(--line)', padding: '8px 0' }}>
               <span style={{ flex: 2 }}>{i.name} — {i.size}</span>
-              <span className="qty-row"><button onClick={() => setCart(cart.map((x) => (x.productId === i.productId ? { ...x, qty: Math.max(1, x.qty - 1) } : x)))}>−</button><span>{i.qty}</span><button onClick={() => setCart(cart.map((x) => (x.productId === i.productId ? { ...x, qty: x.qty + 1 } : x)))}>+</button></span>
+              <span className="qty-row qty-step"><button onClick={() => setCart(cart.map((x) => (x.productId === i.productId ? { ...x, qty: Math.max(1, x.qty - 1) } : x)))}>−</button><span>{i.qty}</span><button onClick={() => setCart(cart.map((x) => (x.productId === i.productId ? { ...x, qty: x.qty + 1 } : x)))}>+</button></span>
               <b>{fmt(i.pricePkr * i.qty)}</b>
               <button className="btn ghost small" onClick={() => setCart(cart.filter((x) => x.productId !== i.productId))}>Remove</button>
             </div>

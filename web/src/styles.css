@@ -4,6 +4,9 @@
   --green: #2e7d32; --red: #b3261e; --line: #ecd9b0;
 }
 * { box-sizing: border-box; }
+html, body { height: 100%; }
+#root { display: flex; flex-direction: column; min-height: 100vh; }
+#root > div { display: flex; flex-direction: column; min-height: 100vh; flex: 1; }
 body { margin: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--cream); color: var(--brown); }
 a { color: var(--gold2); }
 button { cursor: pointer; font-family: inherit; }
@@ -16,20 +19,44 @@ label { font-size: 13px; font-weight: 600; color: var(--brown2); display: block;
 .logo { font-size: 26px; font-weight: 800; color: var(--gold2); letter-spacing: .5px; cursor: pointer; }
 .logo span { color: var(--brown); }
 .nav { display: flex; gap: 4px; flex-wrap: wrap; }
-.nav button { background: none; border: none; padding: 8px 12px; border-radius: 20px; font-size: 14px; font-weight: 600; color: var(--brown2); }
+.nav button { background: none; border: none; padding: 8px 12px; border-radius: 20px; font-size: 14px; font-weight: 600; color: var(--brown2); transition: background .18s ease, color .18s ease; }
 .nav button:hover, .nav button.active { background: var(--cream2); color: var(--gold2); }
 .header-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
-.btn { background: var(--gold); color: var(--brown); border: none; padding: 10px 18px; border-radius: 24px; font-weight: 700; font-size: 14px; }
-.btn:hover { background: #c9932f; }
+.btn { background: var(--gold); color: var(--brown); border: none; padding: 10px 18px; border-radius: 24px; font-weight: 700; font-size: 14px; transition: transform .18s ease, background .18s ease, box-shadow .18s ease; }
+.btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(90,60,10,.25); }
+.btn:active:not(:disabled) { transform: translateY(0) scale(.98); }
 .btn.ghost { background: var(--white); border: 1.5px solid var(--gold); color: var(--gold2); }
 .btn.small { padding: 7px 12px; font-size: 13px; }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
 .cart-count { background: var(--brown); color: #fff; border-radius: 50%; min-width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; padding: 0 5px; }
-.wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px 60px; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px 60px; flex: 1; width: 100%; }
 
 .slider { position: relative; border-radius: 20px; overflow: hidden; height: 460px; margin: 18px 0; background: var(--cream2); box-shadow: 0 8px 30px rgba(90,60,10,.15); }
-.slide { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; opacity: 0; transition: opacity .6s ease; pointer-events: none; }
-.slide.active { opacity: 1; pointer-events: auto; }
+.slide { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; opacity: 0; transition: opacity .8s ease, transform .8s ease; transform: scale(1.015); pointer-events: none; }
+.slide.active { opacity: 1; pointer-events: auto; transform: scale(1); }
+.slide.active .slide-text > * { animation: slide-rise .7s ease both; }
+.slide.active .slide-text > *:nth-child(2) { animation-delay: .08s; }
+.slide.active .slide-text > *:nth-child(3) { animation-delay: .16s; }
+.slide.active .slide-text > *:nth-child(4) { animation-delay: .22s; }
+.slide.active .slide-text > *:nth-child(5) { animation-delay: .28s; }
+.slide.active .slide-text > *:nth-child(6) { animation-delay: .34s; }
+@keyframes slide-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+/* Flying bees across the slider — several bees, different heights/speeds. */
+.bees { position: absolute; inset: 0; overflow: hidden; z-index: 4; pointer-events: none; }
+.bee { position: absolute; left: -8%; animation: bee-fly linear infinite; will-change: left; }
+.bee svg { display: block; animation: bee-bob 1.6s ease-in-out infinite alternate; }
+.bee1 { top: 12%; animation-duration: 16s; animation-delay: 0s; }
+.bee2 { top: 42%; animation-duration: 21s; animation-delay: 5s; }
+.bee2 svg { width: 27px; height: 19px; }
+.bee3 { top: 68%; animation-duration: 18s; animation-delay: 10s; }
+.bee3 svg { width: 39px; height: 28px; }
+.bee4 { top: 26%; animation-duration: 25s; animation-delay: 14s; }
+.bee4 svg { width: 24px; height: 17px; }
+@keyframes bee-fly { from { left: -8%; } to { left: 104%; } }
+@keyframes bee-bob { from { transform: translateY(-7px) rotate(-4deg); } to { transform: translateY(7px) rotate(5deg); } }
+.bee-wing { transform-origin: center; animation: bee-flutter .28s ease-in-out infinite alternate; }
+.bee-wing.wing2 { animation-delay: .14s; }
+@keyframes bee-flutter { from { transform: scaleY(1); } to { transform: scaleY(.55); } }
 .slide-text { padding: 48px 40px; display: flex; flex-direction: column; justify-content: center; gap: 10px; background: var(--cream); }
 .pill { display: inline-block; background: var(--gold); color: var(--brown); font-size: 12px; font-weight: 800; letter-spacing: 1px; padding: 6px 12px; border-radius: 20px; width: fit-content; }
 .slide-text h2 { margin: 0; font-size: 40px; line-height: 1.1; }
@@ -45,12 +72,24 @@ label { font-size: 13px; font-weight: 600; color: var(--brown2); display: block;
 .dot.active { background: var(--gold2); width: 26px; border-radius: 6px; }
 .dot-counter { font-size: 13px; font-weight: 700; color: var(--brown2); margin-left: 6px; }
 
-.section { margin-top: 28px; }
+.section { margin-top: 28px; animation: fadeUp .7s ease both; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+/* Scroll reveal: sections fade in as they enter the viewport (JS adds .in). */
+.reveal { opacity: 0; transform: translateY(18px); transition: opacity .7s ease, transform .7s ease; animation: none; }
+.reveal.in { opacity: 1; transform: none; }
 .section h2 { font-size: 24px; margin: 0 0 4px; }
 .section p.sub { color: var(--muted); margin: 0 0 16px; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
-.card { background: var(--white); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; box-shadow: 0 2px 10px rgba(90,60,10,.06); }
+.card { background: var(--white); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; box-shadow: 0 2px 10px rgba(90,60,10,.06); transition: transform .25s ease, box-shadow .25s ease; }
+.card:hover { transform: translateY(-4px); box-shadow: 0 10px 24px rgba(90,60,10,.14); }
+.card img { transition: transform .5s ease; }
+.card:hover img { transform: scale(1.04); }
 .card img { width: 100%; height: 170px; object-fit: cover; display: block; }
+/* Same honey, different size: vary the crop so sizes don't look identical. */
+.card img.ph-250g { object-position: center 20%; }
+.card img.ph-500g { object-position: center 50%; }
+.card img.ph-1kg { object-position: center 80%; }
+.card img.ph-400g { object-position: center 35%; }
 .card-body { padding: 14px; }
 .card-body h3 { margin: 0; font-size: 17px; }
 .card-body .size { color: var(--muted); font-size: 13px; margin: 2px 0 8px; }
@@ -61,8 +100,10 @@ label { font-size: 13px; font-weight: 600; color: var(--brown2); display: block;
 .save { background: #e6f4ea; color: var(--green); font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 12px; }
 .coming { color: var(--muted); font-weight: 600; }
 .qty-row { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
-.qty-row button { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line); background: var(--cream); font-size: 16px; font-weight: 700; }
-.qty-row span { min-width: 22px; text-align: center; font-weight: 700; }
+.qty-row .btn { flex: 1; white-space: nowrap; min-width: 0; }
+.card .qty-row .btn { font-size: 12px; padding: 8px 6px; }
+.qty-step button { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line); background: var(--cream); font-size: 16px; font-weight: 700; flex: none; }
+.qty-step span { min-width: 22px; text-align: center; font-weight: 700; }
 
 .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
 .step { background: var(--white); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
@@ -72,7 +113,8 @@ label { font-size: 13px; font-weight: 600; color: var(--brown2); display: block;
 .builder { display: grid; grid-template-columns: 1fr 300px; gap: 18px; align-items: start; }
 .panel { background: var(--white); border: 1px solid var(--line); border-radius: 16px; padding: 18px; }
 .chips { display: flex; gap: 8px; flex-wrap: wrap; }
-.chip { border: 1.5px solid var(--line); background: var(--white); border-radius: 20px; padding: 8px 14px; font-weight: 600; font-size: 14px; color: var(--brown2); }
+.chip { border: 1.5px solid var(--line); background: var(--white); border-radius: 20px; padding: 8px 14px; font-weight: 600; font-size: 14px; color: var(--brown2); transition: background .18s ease, border-color .18s ease, color .18s ease, transform .18s ease; }
+.chip:hover { transform: translateY(-1px); }
 .chip.active { border-color: var(--gold2); background: var(--cream2); color: var(--gold2); }
 .total-box { position: sticky; top: 90px; }
 
@@ -98,7 +140,9 @@ th { color: var(--brown2); font-size: 12px; text-transform: uppercase; letter-sp
 .timeline { border-left: 3px solid var(--gold); padding-left: 14px; margin: 12px 0; }
 .timeline div { margin-bottom: 8px; font-size: 14px; }
 .mobile-bar { display: none; }
-.footer { margin-top: 40px; padding: 26px 20px; background: var(--cream2); border-top: 1px solid var(--line); text-align: center; color: var(--brown2); font-size: 14px; }
+.footer { margin-top: auto; padding: 26px 20px; background: var(--cream2); border-top: 1px solid var(--line); text-align: center; color: var(--brown2); font-size: 14px; }
+.footer nav { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-bottom: 10px; }
+.footer nav button { background: none; border: none; font-weight: 700; color: var(--gold2); font-size: 14px; padding: 4px 8px; }
 @media (max-width: 760px) {
   .slider { height: 560px; }
   .slide { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
@@ -115,4 +159,7 @@ th { color: var(--brown2); font-size: 12px; text-transform: uppercase; letter-sp
 @media (prefers-reduced-motion: reduce) {
   .slide-photo img { animation: none; }
   .slide { transition: none; }
+  .bee, .bee svg, .bee-wing { animation: none !important; }
+  .section, .reveal { animation: none; transition: none; opacity: 1; transform: none; }
+  .card, .card img, .btn, .chip { transition: none; }
 }
