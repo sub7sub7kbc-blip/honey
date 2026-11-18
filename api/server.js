@@ -260,8 +260,9 @@ app.post('/api/v1/orders', requireDb, async (req, res) => {
 });
 
 app.post('/api/v1/custom-orders', requireDb, async (req, res) => {
-  const { honeyType, grams, jar, packaging, purpose, giftNote, note, customerName, phone, city, address, postcode, latitude, longitude, paymentMethod, transactionId, paidFrom, customerId } = req.body || {};
+  const { honeyType, grams, qty: qtyRaw, jar, packaging, purpose, giftNote, note, customerName, phone, city, address, postcode, latitude, longitude, paymentMethod, transactionId, paidFrom, customerId } = req.body || {};
   const g = parseInt(grams, 10);
+  const qty = Math.max(1, Math.min(7, parseInt(qtyRaw || 1, 10)));
   if (!honeyType || !g || g < 100 || g > 5000) return res.status(400).json({ error: 'Custom order: choose a honey type and 100g–5kg.' });
   if (!customerName || !phone || !address) return res.status(400).json({ error: 'Name, mobile number and address are required.' });
   if (!PAYMENT_METHODS.includes(paymentMethod)) return res.status(400).json({ error: 'Invalid payment method.' });
@@ -275,17 +276,18 @@ app.post('/api/v1/custom-orders', requireDb, async (req, res) => {
   if (!rows.length) return res.status(400).json({ error: 'This honey has no price yet — price is coming soon.' });
   const gramsOf = (size) => (size === '1kg' ? 1000 : size === '500g' ? 500 : size === '250g' ? 250 : 400);
   const rate = Math.min(...rows.map(r => r.price_pkr / gramsOf(r.size)));
-  const estimate = Math.round(rate * g / 10) * 10;
+  const unitEstimate = Math.round(rate * g / 10) * 10;
+  const estimate = unitEstimate * qty;
   const s = await getSettings();
   const deliveryFee = parseInt(s.delivery_fee || '250', 10);
   const freeAbove = parseInt(s.free_above || '5000', 10);
   const fee = estimate >= freeAbove ? 0 : deliveryFee;
-  const customDetails = { honeyType, grams: g, jar: jar || 'glass', packaging: packaging || 'standard', purpose: purpose || 'home', giftNote: giftNote || '' };
+  const customDetails = { honeyType, grams: g, qty, jar: jar || 'glass', packaging: packaging || 'standard', purpose: purpose || 'home', giftNote: giftNote || '' };
   const label = `${honeyType} Honey — Custom ${g}g (${jar || 'glass'} jar)`;
   const order = await createOrderRecord({
     customerId, customerName, phone, phoneNormalized: normalizePhone(phone), city, address, postcode,
     latitude, longitude, note,
-    items: [{ productId: null, name: label, size: `${g}g`, pricePkr: estimate, qty: 1 }],
+    items: [{ productId: null, name: label, size: `${g}g`, pricePkr: unitEstimate, qty }],
     totalPkr: estimate + fee, deliveryFee: fee, paymentMethod, transactionId, paidFrom,
     isCustom: true, customDetails });
   res.json({ ok: true, order: publicOrder(order), estimate });

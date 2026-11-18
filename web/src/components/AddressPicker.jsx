@@ -9,16 +9,30 @@
 // The postal code is NEVER typed by the customer and NEVER guessed from a
 // city list: it only comes from the map detector (Nominatim), so it is always
 // the real post office code for that exact area. Until a village is selected
-// (or the map is tapped) the field stays empty and read-only.
+// (or the map is tapped) the field stays empty and read-only. If Nominatim
+// has no postcode for the selected place (e.g. Murree), a verified real
+// post office code is used as a last resort (PK_CITY_POSTCODES in api.js) —
+// never from merely typing a city name.
 //
 // Nominatim is free for light use (max 1 request/second, debounced here).
 // Map tiles: OpenStreetMap, free, attribution shown on the map.
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { PK_CITY_POSTCODES } from '../api';
 
 const PAKISTAN_CENTER = [30.3753, 69.3451];
 const PAKISTAN_ZOOM = 6;
+
+// Last-resort real post office code for a city/town, used only when the map
+// detector (Nominatim) returns no postcode for the selected place.
+function postcodeForCity(city) {
+  if (!city) return '';
+  const key = city.trim().toLowerCase();
+  if (PK_CITY_POSTCODES[key]) return PK_CITY_POSTCODES[key];
+  const hit = Object.keys(PK_CITY_POSTCODES).find((k) => key.startsWith(k) || k.startsWith(key));
+  return hit ? PK_CITY_POSTCODES[hit] : '';
+}
 
 function placeCity(a) {
   return a.city || a.town || a.village || a.municipality || a.county || a.state || '';
@@ -79,7 +93,7 @@ export default function AddressPicker({ value, onChange, idPrefix = 'addr' }) {
       const city = placeCity(a);
       set({
         city: city || value.city || '',
-        postcode: a.postcode || '',
+        postcode: a.postcode || postcodeForCity(city) || '',
         address: data.display_name ? data.display_name.split(',').slice(0, 3).join(', ') : value.address || '',
       });
     } catch { /* keep the pin where it is; the user can type the address */ }
@@ -104,7 +118,7 @@ export default function AddressPicker({ value, onChange, idPrefix = 'addr' }) {
   function pickPlace(p) {
     const a = p.address || {};
     const city = placeCity(a);
-    const postcode = a.postcode || '';
+    const postcode = a.postcode || postcodeForCity(city) || '';
     set({
       city,
       postcode,

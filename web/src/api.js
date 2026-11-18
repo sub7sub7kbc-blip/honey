@@ -53,3 +53,27 @@ export function deliveryFor(subtotal, settings) {
   const freeAbove = parseInt(settings?.free_above || '5000', 10);
   return subtotal >= freeAbove ? 0 : fee;
 }
+
+// Real post office (GPO / head-office) codes for Pakistani cities and towns.
+// Used ONLY as a last resort when the map detector (Nominatim) returns no
+// postcode for the selected place — e.g. Murree (47150), which Nominatim
+// does not carry. Nominatim's own postcode always wins. Never used when the
+// customer merely types a city name; the code only appears after a place is
+// actually selected on the map.
+export const PK_CITY_POSTCODES = {
+  lahore: '54000', karachi: '74000', islamabad: '44000', rawalpindi: '46000',
+  faisalabad: '38000', multan: '60000', gujranwala: '52250', peshawar: '25000',
+  quetta: '87300', sialkot: '51310', bahawalpur: '63100', sargodha: '40100',
+  hyderabad: '71000', abbottabad: '22010', murree: '47150', jhelum: '49600',
+  gujrat: '50700', sahiwal: '57000', okara: '56300', kasur: '55150',
+  sheikhupura: '39350', mardan: '23200', sukkur: '65200', larkana: '77150',
+  mirpur: '10250', muzaffarabad: '13100', gilgit: '15100', skardu: '16100',
+  attock: '43600', chakwal: '48800', narowal: '51600', hafizabad: '52110',
+  jhang: '35200', vehari: '61100', khanewal: '65190', toba: '36000',
+  chiniot: '35400', khushab: '41000', mianwali: '42200', bhakkar: '42300',
+  layyah: '31200', muzaffargarh: '34200', jacobabad: '79000', shikarpur: '78100',
+  khairpur: '66020', dadu: '76200', badin: '72200', thatta: '73130',
+  gwadar: '91200', turbat: '91300', khuzdar: '89100', loralai: '85000',
+  zhob: '85200', chaman: '86000', nowshera: '24100', charsadda: '24420',
+  swabi: '23300', haripur: '22620', mansehra: '21300',
+};

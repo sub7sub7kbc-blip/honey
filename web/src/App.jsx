@@ -270,6 +270,8 @@ function OrderBuilder({ products, onAdd, onBuy }) {
 function CustomOrder({ products, customer, onDone }) {
   const [type, setType] = useState('sidr');
   const [grams, setGrams] = useState(500);
+  const [qty, setQty] = useState(1);
+  const [dropOpen, setDropOpen] = useState(false);
   const [jar, setJar] = useState('glass');
   const [packaging, setPackaging] = useState('standard');
   const [purpose, setPurpose] = useState('home');
@@ -279,20 +281,33 @@ function CustomOrder({ products, customer, onDone }) {
   const [busy, setBusy] = useState(false);
   const [addr, setAddr] = useState({ city: customer?.city || '', postcode: '', address: customer?.address || '', lat: null, lon: null });
 
-  const estimate = useMemo(() => {
+  // The product photo + tagline for a honey type, so the customer recognises
+  // the honey by its picture, not just its name.
+  const typePhoto = (tid) => {
+    const p = products.find((x) => x.type === tid && x.photo);
+    return p ? resolvePhoto(p.photo) : '';
+  };
+  const typeTagline = (tid) => {
+    const p = products.find((x) => x.type === tid);
+    return p ? p.tagline : '';
+  };
+  const selType = TYPES.find((t) => t.id === type) || TYPES[0];
+
+  const unitEstimate = useMemo(() => {
     const rows = products.filter((p) => p.type === type && p.pricePkr);
     if (!rows.length) return null;
     const g = (s) => (s === '1kg' ? 1000 : s === '500g' ? 500 : s === '250g' ? 250 : 400);
     const rate = Math.min(...rows.map((r) => r.pricePkr / g(r.size)));
     return Math.round(rate * grams / 10) * 10;
   }, [products, type, grams]);
+  const estimate = unitEstimate ? unitEstimate * qty : null;
 
   async function submit(e) {
     e.preventDefault(); setErr(''); setBusy(true);
     const f = new FormData(e.target);
     try {
       const data = await api.placeCustomOrder({
-        honeyType: type, grams, jar, packaging, purpose, giftNote,
+        honeyType: type, grams, qty, jar, packaging, purpose, giftNote,
         customerName: f.get('name'), phone: f.get('phone'), city: addr.city,
         address: addr.address, postcode: addr.postcode, latitude: addr.lat, longitude: addr.lon,
         note: f.get('note') || '',
@@ -309,15 +324,35 @@ function CustomOrder({ products, customer, onDone }) {
       <div className="builder">
         <div className="panel">
           <label>Honey type</label>
-          <div className="chips">{TYPES.map((t) => (
-            <button key={t.id} className={'chip' + (type === t.id ? ' active' : '')} onClick={() => { setType(t.id); if (t.id === 'comb') setGrams((g) => Math.min(g, 400)); }}>{t.name}</button>
-          ))}</div>
+          <div className="type-dropdown">
+            <button type="button" className="type-drop-btn" onClick={() => setDropOpen((o) => !o)}>
+              {typePhoto(type) && <img src={typePhoto(type)} alt={selType.name} />}
+              <span>{selType.name}</span>
+              <span className="drop-arrow">▾</span>
+            </button>
+            {dropOpen && (<>
+              <div className="type-drop-backdrop" onClick={() => setDropOpen(false)} />
+              <div className="type-drop-list">
+                {TYPES.map((t) => (
+                  <button key={t.id} type="button" className={'type-drop-item' + (type === t.id ? ' active' : '')} onClick={() => { setType(t.id); if (t.id === 'comb') setGrams((g) => Math.min(g, 400)); setDropOpen(false); }}>
+                    {typePhoto(t.id) && <img src={typePhoto(t.id)} alt={t.name} />}
+                    <span><b>{t.name}</b><small>{typeTagline(t.id)}</small></span>
+                  </button>
+                ))}
+              </div>
+            </>)}
+          </div>
           <label>Quantity: {grams}g ({type === 'comb' ? '100g – 400g (honeycomb)' : '100g – 5kg'})</label>
           <input type="range" min="100" max={type === 'comb' ? 400 : 5000} step="50" value={grams} onChange={(e) => setGrams(parseInt(e.target.value, 10))} />
           <div className="row" style={{ justifyContent: 'space-between' }}><span className="muted">100g</span><span className="muted">{type === 'comb' ? '400g' : '5kg'}</span></div>
           <div className="chips">{[250, 500, 1000, 2000, 5000].filter((g) => type !== 'comb' || g <= 400).map((g) => (
             <button key={g} className={'chip' + (grams === g ? ' active' : '')} onClick={() => setGrams(g)}>{g >= 1000 ? g / 1000 + 'kg' : g + 'g'}</button>
           ))}</div>
+          <label>How many jars: {qty} (1–7)</label>
+          <div className="qty-row qty-step">
+            <button onClick={() => setQty(Math.max(1, qty - 1))}>−</button><span>{qty}</span>
+            <button onClick={() => setQty(Math.min(7, qty + 1))}>+</button>
+          </div>
           <div className="row">
             <div><label>Jar</label><select value={jar} onChange={(e) => setJar(e.target.value)}><option value="glass">Glass jar</option><option value="plastic">Plastic jar</option><option value="squeeze">Squeeze bottle</option></select></div>
             <div><label>Packing</label><select value={packaging} onChange={(e) => setPackaging(e.target.value)}><option value="standard">Standard</option><option value="gift">Gift box</option></select></div>
@@ -327,7 +362,10 @@ function CustomOrder({ products, customer, onDone }) {
         </div>
         <div className="panel total-box">
           <h3>Live estimate</h3>
+          {typePhoto(type) && <img src={typePhoto(type)} alt={selType.name} className="custom-preview-img" />}
+          <p><b>{selType.name}</b> — {grams}g × {qty} jar{qty > 1 ? 's' : ''}</p>
           <p className="price"><span key={estimate} className="price-change">{estimate ? fmt(estimate) : 'Price coming soon — set prices in Admin first'}</span></p>
+          {qty > 1 && unitEstimate && <p className="muted">{fmt(unitEstimate)} per jar × {qty}</p>}
           <p className="muted">+ delivery (free above Rs 5,000)</p>
           <button className="btn" disabled={!estimate} onClick={() => setShowForm(true)}>Continue to details</button>
         </div>
