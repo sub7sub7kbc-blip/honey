@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { api, fmt, resolvePhoto } from './api';
+import { api, fmt, resolvePhoto, deliveryFor } from './api';
 import Slider from './components/Slider';
 import HoneyJourney from './components/HoneyJourney';
 import Admin from './components/Admin';
 import { AuthModal, MyAccount } from './components/Auth';
+import ProductDetail from './components/ProductDetail';
+import WhatsAppOrderModal from './components/WhatsAppOrderModal';
+import AddressPicker from './components/AddressPicker';
 
 const TYPES = [
   { id: 'sidr', name: 'Sidr Honey' }, { id: 'acacia', name: 'Acacia Honey' },
@@ -14,16 +17,6 @@ const PAYMENTS = [
   { id: 'cod', name: 'Cash on Delivery' }, { id: 'easypaisa', name: 'EasyPaisa' },
   { id: 'jazzcash', name: 'JazzCash' }, { id: 'bank', name: 'Bank Transfer' },
 ];
-
-// Delivery shown in the cart and at checkout mirrors the server rule
-// (api/server.js): Rs 250, free once the subtotal reaches the free-above
-// threshold. Both read the same Admin settings (defaults 250 / 5000), so
-// the customer sees the real final total BEFORE placing the order.
-function deliveryFor(subtotal, settings) {
-  const fee = parseInt(settings?.delivery_fee || '250', 10);
-  const freeAbove = parseInt(settings?.free_above || '5000', 10);
-  return subtotal >= freeAbove ? 0 : fee;
-}
 
 function loadCart() { try { return JSON.parse(localStorage.getItem('goldenhive-cart') || '[]'); } catch { return []; } }
 
@@ -39,6 +32,8 @@ export default function App() {
   const [trackQ, setTrackQ] = useState('');
   const [tracked, setTracked] = useState(null);
   const [orderDone, setOrderDone] = useState(null);
+  const [detailProduct, setDetailProduct] = useState(null);
+  const [waOrder, setWaOrder] = useState(null);
 
   const settings = shop?.settings || {};
   const products = shop?.products || [];
@@ -124,9 +119,9 @@ export default function App() {
                 {products.map((p) => (
                   <div className="card" key={p.id}>
                     <div className="accent-bar" style={{ background: p.accent }} />
-                    {p.photo && <img src={resolvePhoto(p.photo)} alt={p.name} className={'ph-' + p.size} />}
+                    {p.photo && <img src={resolvePhoto(p.photo)} alt={p.name} className={'ph-' + p.size} onClick={() => setDetailProduct(p)} title="View details" style={{ cursor: 'pointer' }} />}
                     <div className="card-body">
-                      <h3>{p.name}</h3>
+                      <h3 onClick={() => setDetailProduct(p)} title="View details" style={{ cursor: 'pointer' }}>{p.name}</h3>
                       <p className="size">{p.size} • {p.blossomLabel}</p>
                       <p className="muted" style={{ fontSize: 13 }}>{p.tagline}</p>
                       <div className="price-row">
@@ -199,6 +194,8 @@ export default function App() {
       {showCart && <CartModal cart={cart} setCart={setCart} settings={settings} onClose={() => setShowCart(false)} onCheckout={() => { setShowCart(false); setShowCheckout(true); }} />}
       {showCheckout && <CheckoutModal cart={cart} setCart={setCart} customer={customer} settings={settings} onClose={() => setShowCheckout(false)} onDone={(o) => { setShowCheckout(false); setOrderDone(o); }} />}
       {orderDone && <OrderDoneModal order={orderDone} whatsapp={whatsappLink(orderDone)} onClose={() => setOrderDone(null)} />}
+      {detailProduct && <ProductDetail product={detailProduct} settings={settings} onClose={() => setDetailProduct(null)} onAdd={(p, q) => addToCart(p, q)} onBuyNow={(p, q) => { addToCart(p, q); setDetailProduct(null); setShowCart(false); setShowCheckout(true); }} onWhatsApp={(p, q) => { setDetailProduct(null); setWaOrder({ product: p, qty: q }); }} />}
+      {waOrder && <WhatsAppOrderModal product={waOrder.product} qty={waOrder.qty} customer={customer} settings={settings} onClose={() => setWaOrder(null)} />}
     </div>
   );
 }
@@ -280,6 +277,7 @@ function CustomOrder({ products, customer, onDone }) {
   const [showForm, setShowForm] = useState(false);
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
+  const [addr, setAddr] = useState({ city: customer?.city || '', postcode: '', address: customer?.address || '', lat: null, lon: null });
 
   const estimate = useMemo(() => {
     const rows = products.filter((p) => p.type === type && p.pricePkr);
@@ -295,8 +293,9 @@ function CustomOrder({ products, customer, onDone }) {
     try {
       const data = await api.placeCustomOrder({
         honeyType: type, grams, jar, packaging, purpose, giftNote,
-        customerName: f.get('name'), phone: f.get('phone'), city: f.get('city'),
-        address: f.get('address'), note: f.get('note') || '',
+        customerName: f.get('name'), phone: f.get('phone'), city: addr.city,
+        address: addr.address, postcode: addr.postcode, latitude: addr.lat, longitude: addr.lon,
+        note: f.get('note') || '',
         paymentMethod: f.get('payment'), transactionId: f.get('tid') || '', paidFrom: f.get('paidFrom') || '',
         customerId: customer?.id,
       });
@@ -341,10 +340,7 @@ function CustomOrder({ products, customer, onDone }) {
             <div><label>Full name</label><input name="name" defaultValue={customer?.name || ''} required /></div>
             <div><label>Mobile number</label><input name="phone" defaultValue={customer?.phone || ''} required /></div>
           </div>
-          <div className="row">
-            <div><label>City</label><input name="city" defaultValue={customer?.city || ''} /></div>
-            <div><label>Address</label><input name="address" defaultValue={customer?.address || ''} required /></div>
-          </div>
+          <AddressPicker value={addr} onChange={setAddr} idPrefix="co" />
           <label>Special instructions</label><input name="note" placeholder="Anything special?" />
           <label>Payment method</label>
           <select name="payment">{PAYMENTS.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
@@ -390,6 +386,7 @@ function CartModal({ cart, setCart, settings, onClose, onCheckout }) {
 function CheckoutModal({ cart, setCart, customer, settings, onClose, onDone }) {
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
+  const [addr, setAddr] = useState({ city: customer?.city || '', postcode: '', address: customer?.address || '', lat: null, lon: null });
   const [payment, setPayment] = useState('cod');
   const total = cart.reduce((a, i) => a + i.pricePkr * i.qty, 0);
   const delivery = deliveryFor(total, settings);
@@ -401,8 +398,9 @@ function CheckoutModal({ cart, setCart, customer, settings, onClose, onDone }) {
     try {
       const data = await api.placeOrder({
         items: cart.map((i) => ({ productId: i.productId, qty: i.qty })),
-        customerName: f.get('name'), phone: f.get('phone'), city: f.get('city'),
-        address: f.get('address'), note: f.get('note') || '', paymentMethod: payment,
+        customerName: f.get('name'), phone: f.get('phone'), city: addr.city, address: addr.address,
+        postcode: addr.postcode, latitude: addr.lat, longitude: addr.lon,
+        note: f.get('note') || '', paymentMethod: payment,
         transactionId: f.get('tid') || '', paidFrom: f.get('paidFrom') || '',
         customerId: customer?.id,
       });
@@ -419,10 +417,7 @@ function CheckoutModal({ cart, setCart, customer, settings, onClose, onDone }) {
             <div><label>Full name</label><input name="name" defaultValue={customer?.name || ''} required /></div>
             <div><label>Mobile number</label><input name="phone" defaultValue={customer?.phone || ''} required /></div>
           </div>
-          <div className="row">
-            <div><label>City</label><input name="city" defaultValue={customer?.city || ''} /></div>
-            <div><label>Address</label><input name="address" defaultValue={customer?.address || ''} required /></div>
-          </div>
+          <AddressPicker value={addr} onChange={setAddr} idPrefix="co" />
           <label>Note (optional)</label><input name="note" />
           <label>Payment method</label>
           <select value={payment} onChange={(e) => setPayment(e.target.value)}>

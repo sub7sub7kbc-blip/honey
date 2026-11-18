@@ -43,3 +43,34 @@ export function resolvePhoto(src) {
   return src;
 }
 export const fmt = (n) => 'Rs ' + Number(n || 0).toLocaleString('en-PK');
+
+// Delivery rule (mirrors api/server.js): Rs 250, free once the subtotal
+// reaches the free-above threshold. Reads the same Admin settings
+// (defaults 250 / 5000), so cart, checkout and WhatsApp orders all show
+// the same final total the server will charge.
+export function deliveryFor(subtotal, settings) {
+  const fee = parseInt(settings?.delivery_fee || '250', 10);
+  const freeAbove = parseInt(settings?.free_above || '5000', 10);
+  return subtotal >= freeAbove ? 0 : fee;
+}
+
+// Pakistani cities → postal code, used as a fallback when the map search
+// does not return a postcode. Nominatim's own postcode is preferred.
+// Only well-known head-office postcodes are listed here.
+export const PK_CITY_POSTCODES = {
+  lahore: '54000', karachi: '74000', islamabad: '44000', rawalpindi: '46000',
+  faisalabad: '38000', multan: '60000', gujranwala: '52250', peshawar: '25000',
+  quetta: '87300', sialkot: '51310', bahawalpur: '63100', sargodha: '40100',
+  hyderabad: '71000', abbottabad: '22010', murree: '47150', jhelum: '49600',
+  gujrat: '50700', sahiwal: '57000', okara: '56300', kasur: '55150',
+  sheikhupura: '39350', mardan: '23200', sukkur: '65200', larkana: '77150',
+  mirpur: '10250', muzaffarabad: '13100', gilgit: '15100', skardu: '16100',
+  attock: '43600', chakwal: '48800', narowal: '51600', hafizabad: '52110',
+  jhang: '35200', vehari: '61100', khanewal: '65190', toba: '36000',
+  chiniot: '35400', khushab: '41000', mianwali: '42200', bhakkar: '42300',
+  layyah: '31200', muzaffargarh: '34200', jacobabad: '79000', shikarpur: '78100',
+  khairpur: '66020', dadu: '76200', badin: '72200', thatta: '73130',
+  gwadar: '91200', turbat: '91300', khuzdar: '89100', loralai: '85000',
+  zhob: '85200', chaman: '86000', nowshera: '24100', charsadda: '24420',
+  swabi: '23300', haripur: '22620', mansehra: '21300',
+};

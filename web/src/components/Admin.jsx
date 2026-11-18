@@ -145,7 +145,7 @@ export default function Admin({ shop, reloadShop }) {
             <tbody>{filtered.map((o) => (
               <tr key={o.id}>
                 <td>{o.code}<br /><span className="muted">{new Date(o.createdAt).toLocaleString()}</span></td>
-                <td>{o.customerName}<br /><span className="muted">{o.phone}</span><br /><span className="muted">{o.city} — {o.address}</span></td>
+                <td>{o.customerName}<br /><span className="muted">{o.phone}</span><br /><span className="muted">{o.city}{o.postcode ? ` (${o.postcode})` : ''} — {o.address}</span>{o.latitude && o.longitude ? <><br /><a target="_blank" rel="noreferrer" href={`https://maps.google.com/?q=${o.latitude},${o.longitude}`}>View on map</a></> : null}</td>
                 <td>{o.items.map((i) => `${i.name} × ${i.qty}`).join(', ')}<br /><span className="muted">{o.transactionId ? `TID: ${o.transactionId}` : ''} {o.paidFrom ? `from ${o.paidFrom}` : ''}</span></td>
                 <td>{fmt(o.totalPkr)}</td>
                 <td><select value={o.paymentStatus} onChange={async (e) => { await api.adminSetPayment(token, o.code, e.target.value); loadAll(); }}>

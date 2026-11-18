@@ -95,6 +95,12 @@ async function migrate() {
       `UPDATE products SET price_pkr=$1 WHERE type=$2 AND size=$3 AND price_pkr IS NULL`,
       [price, type, size]);
   }
+  // Address columns (2026-11-18): postcode + map location on orders, so the
+  // seller sees the customer's postal code and a map pin. Guarded ALTERs so
+  // existing databases gain the columns on boot without a fresh schema.
+  await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS postcode TEXT DEFAULT ''`);
+  await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION`);
+  await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION`);
   dbUp = true;
 }
 
@@ -126,7 +132,8 @@ function publicProduct(p) {
 }
 function publicOrder(o) {
   return { id: o.id, code: o.code, customerName: o.customer_name, phone: o.phone,
-    city: o.city, address: o.address, note: o.note, items: o.items,
+    city: o.city, address: o.address, postcode: o.postcode || '',
+    latitude: o.latitude, longitude: o.longitude, note: o.note, items: o.items,
     totalPkr: o.total_pkr, deliveryFee: o.delivery_fee,
     paymentMethod: o.payment_method, paymentStatus: o.payment_status,
     transactionId: o.transaction_id, paidFrom: o.paid_from, status: o.status,
@@ -204,12 +211,14 @@ app.get('/api/v1/photos/:id', requireDb, async (req, res) => {
 // ---- Orders ----
 async function createOrderRecord(data) {
   const { rows } = await pool.query(
-    `INSERT INTO orders (customer_id, customer_name, phone, phone_normalized, city, address, note,
+    `INSERT INTO orders (customer_id, customer_name, phone, phone_normalized, city, address, postcode,
+       latitude, longitude, note,
        items, total_pkr, delivery_fee, payment_method, payment_status, transaction_id, paid_from,
        status, is_custom, custom_details)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'pending',$12,$13,'placed',$14,$15) RETURNING *`,
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,'pending',$15,$16,'placed',$17,$18) RETURNING *`,
     [data.customerId || null, data.customerName, data.phone, data.phoneNormalized, data.city || '',
-     data.address, data.note || '', JSON.stringify(data.items), data.totalPkr, data.deliveryFee,
+     data.address, data.postcode || '', data.latitude ?? null, data.longitude ?? null,
+     data.note || '', JSON.stringify(data.items), data.totalPkr, data.deliveryFee,
      data.paymentMethod, data.transactionId || '', data.paidFrom || '', !!data.isCustom,
      data.customDetails ? JSON.stringify(data.customDetails) : null]);
   const order = rows[0];
@@ -221,7 +230,7 @@ async function createOrderRecord(data) {
 }
 
 app.post('/api/v1/orders', requireDb, async (req, res) => {
-  const { items, customerName, phone, city, address, note, paymentMethod, transactionId, paidFrom, customerId } = req.body || {};
+  const { items, customerName, phone, city, address, postcode, latitude, longitude, note, paymentMethod, transactionId, paidFrom, customerId } = req.body || {};
   if (!customerName || !phone || !address) return res.status(400).json({ error: 'Name, mobile number and address are required.' });
   if (!PAYMENT_METHODS.includes(paymentMethod)) return res.status(400).json({ error: 'Invalid payment method.' });
   if (paymentMethod !== 'cod') {
@@ -244,13 +253,14 @@ app.post('/api/v1/orders', requireDb, async (req, res) => {
   }
   const fee = total >= freeAbove ? 0 : deliveryFee;
   const order = await createOrderRecord({
-    customerId, customerName, phone, phoneNormalized: normalizePhone(phone), city, address, note,
+    customerId, customerName, phone, phoneNormalized: normalizePhone(phone), city, address, postcode,
+    latitude, longitude, note,
     items: savedItems, totalPkr: total + fee, deliveryFee: fee, paymentMethod, transactionId, paidFrom });
   res.json({ ok: true, order: publicOrder(order) });
 });
 
 app.post('/api/v1/custom-orders', requireDb, async (req, res) => {
-  const { honeyType, grams, jar, packaging, purpose, giftNote, note, customerName, phone, city, address, paymentMethod, transactionId, paidFrom, customerId } = req.body || {};
+  const { honeyType, grams, jar, packaging, purpose, giftNote, note, customerName, phone, city, address, postcode, latitude, longitude, paymentMethod, transactionId, paidFrom, customerId } = req.body || {};
   const g = parseInt(grams, 10);
   if (!honeyType || !g || g < 100 || g > 5000) return res.status(400).json({ error: 'Custom order: choose a honey type and 100g–5kg.' });
   if (!customerName || !phone || !address) return res.status(400).json({ error: 'Name, mobile number and address are required.' });
@@ -273,7 +283,8 @@ app.post('/api/v1/custom-orders', requireDb, async (req, res) => {
   const customDetails = { honeyType, grams: g, jar: jar || 'glass', packaging: packaging || 'standard', purpose: purpose || 'home', giftNote: giftNote || '' };
   const label = `${honeyType} Honey — Custom ${g}g (${jar || 'glass'} jar)`;
   const order = await createOrderRecord({
-    customerId, customerName, phone, phoneNormalized: normalizePhone(phone), city, address, note,
+    customerId, customerName, phone, phoneNormalized: normalizePhone(phone), city, address, postcode,
+    latitude, longitude, note,
     items: [{ productId: null, name: label, size: `${g}g`, pricePkr: estimate, qty: 1 }],
     totalPkr: estimate + fee, deliveryFee: fee, paymentMethod, transactionId, paidFrom,
     isCustom: true, customDetails });
