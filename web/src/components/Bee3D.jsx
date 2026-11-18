@@ -367,19 +367,20 @@ export default function Bee3D({ mode = 'slider', className = '' }) {
           const speed = span / b.loop;
           b.x += speed * dt;
           // Portrait (mobile): the text sits at the bottom, so keep the bees
-          // in the top band above the words. The pill's top edge sits at
-          // world y = 0.23 on a phone (bottom-anchored text, 560px slider),
-          // and the lowest visible bee pixel is ~0.16 below its centre, so
-          // the centre must stay above ~0.5 — floor 0.7 clears it well.
+          // in the TOP band only — never down near the bottom/text. The floor
+          // is 1.6 (was 0.7): the bees used to fly low over the bottom half
+          // of the hero on a phone, which read as a "bottom animation".
           // Ceiling 2.5: same perspective rule as desktop (a bee at z +0.6
           // looks bigger, so its wings would clip at the top edge above it).
           const portrait = w / h < 1;
           if (b.x > halfW + 2.5) {
             b.x = -halfW - 2.5;
-            b.yBase = portrait ? 0.7 + Math.random() * 1.8 : 2.35 + Math.random() * 0.15;
+            b.yBase = portrait ? 1.6 + Math.random() * 0.9 : 2.35 + Math.random() * 0.15;
           }
-          const yBase = portrait ? Math.min(Math.max(b.yBase, 0.7), 2.5) : Math.min(Math.max(b.yBase, 2.35), 2.5);
-          const bob = Math.sin(t * 1.7 + b.phase) * 0.1;
+          const yBase = portrait ? Math.min(Math.max(b.yBase, 1.6), 2.5) : Math.min(Math.max(b.yBase, 2.35), 2.5);
+          // No vertical bob: the bees fly in a straight line at the top, so
+          // they never dip down toward the bottom of the hero.
+          const bob = 0;
           b.group.position.set(b.x, yBase + bob, b.z + Math.sin(t * 0.8 + b.phase) * 0.2);
           // slight nose-up pitch, like a real bee in flight
           b.group.rotation.set(Math.sin(t * 1.1 + b.phase) * 0.05, 0, 0.1 + Math.sin(t * 0.9 + b.phase) * 0.05);
