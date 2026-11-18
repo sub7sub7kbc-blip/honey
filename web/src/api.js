@@ -40,6 +40,9 @@ export const api = {
 export function resolvePhoto(src) {
   if (!src) return '';
   if (src.startsWith('/api/')) return BASE + src;
+  // Product photos are shown small (cards ~200px, detail ~420px), so serve
+  // a 600px version instead of 1200px — downloads much faster.
+  if (src.includes('images.pexels.com')) return src.replace('w=1200', 'w=600');
   return src;
 }
 export const fmt = (n) => 'Rs ' + Number(n || 0).toLocaleString('en-PK');

@@ -1,8 +1,10 @@
 // "From flower to jar" — a cinematic photo film, like a nature documentary.
 // Real macro close-ups crossfade with a slow Ken Burns zoom while the 5 steps
 // light up in turn. The bee flies across the film and rests by the hive.
-import { useEffect, useState } from 'react';
-import Bee3D from './Bee3D';
+import { useEffect, useState, lazy, Suspense } from 'react';
+// Lazy: Three.js is ~600KB. Loading it after the main bundle keeps the
+// first paint fast; the bee appears a moment later.
+const Bee3D = lazy(() => import('./Bee3D'));
 
 const PX = (id) => `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=1200`;
 
@@ -33,7 +35,7 @@ export default function HoneyJourney() {
           ))}
           <div className="journey-scrim" />
           <div className="journey-bar"><i style={{ width: `${((active + 1) / STEPS.length) * 100}%` }} /></div>
-          <Bee3D mode="journey" className="bee3d" />
+          <Suspense fallback={null}><Bee3D mode="journey" className="bee3d" /></Suspense>
           <div className="journey-caption" key={active}>
             <b>{s.n}. {s.title}</b>
             <span>{s.text}</span>

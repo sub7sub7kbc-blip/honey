@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { api, fmt, resolvePhoto } from '../api';
-import Bee3D from './Bee3D';
+// Lazy: Three.js is ~600KB. Loading it after the main bundle keeps the
+// first paint fast; the bee appears a moment later.
+const Bee3D = lazy(() => import('./Bee3D'));
 
 const TYPES = ['sidr', 'acacia', 'multiflora', 'sarson', 'comb'];
 
@@ -63,7 +65,7 @@ export default function Slider({ products, settings, onAdd, onBuyNow }) {
           </div>
         </div>
       ))}
-      <Bee3D mode="slider" className="bee3d" />
+      <Suspense fallback={null}><Bee3D mode="slider" className="bee3d" /></Suspense>
       <button className="slider-arrow prev" aria-label="Previous" onClick={() => setIdx((i) => (i - 1 + slides.length) % slides.length)}>‹</button>
       <button className="slider-arrow next" aria-label="Next" onClick={() => setIdx((i) => (i + 1) % slides.length)}>›</button>
       <div className="slider-dots">

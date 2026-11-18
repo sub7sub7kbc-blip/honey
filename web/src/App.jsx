@@ -39,10 +39,19 @@ export default function App() {
   const products = shop?.products || [];
 
   async function load() {
-    try { setShop(await api.getShop()); setLoadErr(''); }
+    try {
+      const fresh = await api.getShop();
+      setShop(fresh); setLoadErr('');
+      try { localStorage.setItem('goldenhive-shop', JSON.stringify(fresh)); } catch {}
+    }
     catch (e) { setLoadErr(e.message); }
   }
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    // Show the last loaded shop instantly (repeat visits), then refresh in
+    // the background — the shop never waits on a sleeping API to appear.
+    try { const cached = localStorage.getItem('goldenhive-shop'); if (cached) setShop(JSON.parse(cached)); } catch {}
+    load();
+  }, []);
   // Scroll reveal: fade sections in as they enter the viewport.
   useEffect(() => {
     const els = document.querySelectorAll('.reveal:not(.in)');
