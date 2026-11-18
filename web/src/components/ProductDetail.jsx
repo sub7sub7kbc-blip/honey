@@ -47,7 +47,8 @@ export default function ProductDetail({ product: p, settings, onClose, onAdd, on
               <button onClick={() => setQty(Math.max(1, qty - 1))}>−</button>
               <span>{qty}</span>
               <button onClick={() => setQty(Math.min(99, qty + 1))}>+</button>
-              <b style={{ marginLeft: 8 }}>{p.pricePkr ? fmt(subtotal + delivery) : ''}</b>
+              <span className="muted" style={{ fontSize: 13, marginLeft: 8 }}>Total (incl. delivery):</span>
+              <b>{p.pricePkr ? fmt(subtotal + delivery) : ''}</b>
             </div>
             <div className="qty-row">
               <button className="btn" disabled={!p.pricePkr} onClick={() => { onAdd(p, qty); onClose(); }}>Add to Cart</button>
