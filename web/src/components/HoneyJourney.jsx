@@ -24,7 +24,7 @@ export default function HoneyJourney() {
   return (
     <div className="section reveal">
       <h2>From flower to jar — how our honey is made</h2>
-      <p className="sub">Real close-ups, like in a nature film — watch one bee make your honey.</p>
+      <p className="sub">Real close-ups, like in a nature film — see how our honey is made.</p>
       <div className="journey panel">
         <div className="journey-stage">
           {STEPS.map((st, i) => (
