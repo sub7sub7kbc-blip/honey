@@ -10,7 +10,20 @@ export default function ProductDetail({ product: p, settings, onClose, onAdd, on
   const [qty, setQty] = useState(1);
   const [zoomOpen, setZoomOpen] = useState(false);
   const [zoom, setZoom] = useState(1);
+  const [hoverZoom, setHoverZoom] = useState(false);
+  const [origin, setOrigin] = useState({ x: 50, y: 50 });
   const subtotal = p.pricePkr ? p.pricePkr * qty : 0;
+
+  // Cursor zoom: hovering the photo zooms it in automatically and the zoomed
+  // area follows the cursor; moving the cursor away zooms back out.
+  function handleHover(e) {
+    const r = e.currentTarget.getBoundingClientRect();
+    setOrigin({
+      x: Math.max(0, Math.min(100, ((e.clientX - r.left) / r.width) * 100)),
+      y: Math.max(0, Math.min(100, ((e.clientY - r.top) / r.height) * 100)),
+    });
+    setHoverZoom(true);
+  }
   const delivery = p.pricePkr ? deliveryFor(subtotal, settings) : 0;
   const hasWhatsApp = !!(settings?.whatsapp_number || '').replace(/\D/g, '');
 
@@ -21,15 +34,26 @@ export default function ProductDetail({ product: p, settings, onClose, onAdd, on
         <div className="detail-grid">
           <div>
             {p.photo && (
-              <img
-                src={resolvePhoto(p.photo)}
-                alt={p.name}
-                className="detail-img"
-                onClick={() => { setZoom(1); setZoomOpen(true); }}
-                title="Tap to zoom"
-              />
+              <div
+                className="detail-zoom-wrap"
+                onMouseMove={handleHover}
+                onMouseLeave={() => setHoverZoom(false)}
+              >
+                <img
+                  src={resolvePhoto(p.photo)}
+                  alt={p.name}
+                  className="detail-img"
+                  style={{
+                    transform: hoverZoom ? 'scale(2)' : 'scale(1)',
+                    transformOrigin: `${origin.x}% ${origin.y}%`,
+                    transition: 'transform .25s ease',
+                  }}
+                  onClick={() => { setZoom(1); setZoomOpen(true); }}
+                  title="Hover to zoom, click for fullscreen"
+                />
+              </div>
             )}
-            <p className="muted" style={{ fontSize: 13, margin: '6px 0 0' }}>Tap the photo to zoom.</p>
+            <p className="muted" style={{ fontSize: 13, margin: '6px 0 0' }}>Hover the photo to auto-zoom. Click for fullscreen zoom.</p>
           </div>
           <div>
             <h2 style={{ margin: '0 0 4px' }}>{p.name}</h2>

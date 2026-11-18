@@ -246,3 +246,8 @@ th { color: var(--brown2); font-size: 12px; text-transform: uppercase; letter-sp
   .detail-img { max-height: 300px; }
   .addr-map { height: 200px; }
 }
+
+/* Cursor auto-zoom on the product detail photo: the image scales up on hover
+   and the zoomed area follows the cursor; it zooms back out on mouse leave. */
+.detail-zoom-wrap { overflow: hidden; border-radius: 14px; cursor: zoom-in; }
+.detail-zoom-wrap .detail-img { border-radius: 0; }
