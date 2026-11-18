@@ -1,30 +1,24 @@
 // Address picker: free map (Leaflet + OpenStreetMap) with village/city search
-// (Nominatim, free) and postal-code auto-fill.
+// (Nominatim, free) and postal-code auto-detection.
 //
-// The customer types their village or city, picks a suggestion, and the form
-// fills itself: city, postal code, address, and a pin on the map. They can
-// also tap the map (or drag the pin) to set their exact location — the
+// The customer searches their village or city, picks a suggestion, and the
+// form fills itself: city, postal code, address, and a pin on the map. They
+// can also tap the map (or drag the pin) to set their exact location — the
 // address and postal code are filled back from the map (reverse geocoding).
-// Postal code comes from Nominatim first; if it has none, a built-in list of
-// Pakistani city postcodes is used (see PK_CITY_POSTCODES in api.js).
+//
+// The postal code is NEVER typed by the customer and NEVER guessed from a
+// city list: it only comes from the map detector (Nominatim), so it is always
+// the real post office code for that exact area. Until a village is selected
+// (or the map is tapped) the field stays empty and read-only.
 //
 // Nominatim is free for light use (max 1 request/second, debounced here).
 // Map tiles: OpenStreetMap, free, attribution shown on the map.
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { PK_CITY_POSTCODES } from '../api';
 
 const PAKISTAN_CENTER = [30.3753, 69.3451];
 const PAKISTAN_ZOOM = 6;
-
-function postcodeForCity(city) {
-  if (!city) return '';
-  const key = city.trim().toLowerCase();
-  if (PK_CITY_POSTCODES[key]) return PK_CITY_POSTCODES[key];
-  const hit = Object.keys(PK_CITY_POSTCODES).find((k) => key.startsWith(k) || k.startsWith(key));
-  return hit ? PK_CITY_POSTCODES[hit] : '';
-}
 
 function placeCity(a) {
   return a.city || a.town || a.village || a.municipality || a.county || a.state || '';
@@ -85,7 +79,7 @@ export default function AddressPicker({ value, onChange, idPrefix = 'addr' }) {
       const city = placeCity(a);
       set({
         city: city || value.city || '',
-        postcode: a.postcode || postcodeForCity(city) || value.postcode || '',
+        postcode: a.postcode || '',
         address: data.display_name ? data.display_name.split(',').slice(0, 3).join(', ') : value.address || '',
       });
     } catch { /* keep the pin where it is; the user can type the address */ }
@@ -110,7 +104,7 @@ export default function AddressPicker({ value, onChange, idPrefix = 'addr' }) {
   function pickPlace(p) {
     const a = p.address || {};
     const city = placeCity(a);
-    const postcode = a.postcode || postcodeForCity(city) || '';
+    const postcode = a.postcode || '';
     set({
       city,
       postcode,
@@ -122,9 +116,10 @@ export default function AddressPicker({ value, onChange, idPrefix = 'addr' }) {
   }
 
   function onCityChange(city) {
-    const patch = { city };
-    if (!value.postcode) { const pc = postcodeForCity(city); if (pc) patch.postcode = pc; }
-    set(patch);
+    // Typing a city name never fills the postal code — the code only comes
+    // from the map detector (search pick or map tap), so it is always the
+    // real post office code for that exact area.
+    set({ city });
   }
 
   return (
@@ -158,12 +153,15 @@ export default function AddressPicker({ value, onChange, idPrefix = 'addr' }) {
           <label>Postal code</label>
           <input
             value={value.postcode || ''}
-            onChange={(e) => set({ postcode: e.target.value })}
-            placeholder="Auto-filled"
+            readOnly
+            placeholder="Select your village on the map"
             inputMode="numeric"
+            title="Auto-filled from the map — select your village or tap the map"
+            style={{ background: 'var(--cream2)' }}
           />
         </div>
       </div>
+      <p className="muted" style={{ fontSize: 13, margin: '4px 0 10px' }}>Postal code is filled automatically from the map — it is the real post office code for your area. Select your village above or tap the map.</p>
       <label>Full address</label>
       <input value={value.address || ''} onChange={(e) => set({ address: e.target.value })} placeholder="House / street / area" required />
     </div>
